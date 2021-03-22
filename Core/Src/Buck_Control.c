@@ -25,18 +25,58 @@ RAW_ADC_Struct Cooked_ADC;
   *
   * @note Function valid for STM32F1
   */
-void Buck_Tim_Init(TIM_HandleTypeDef BuckTIM, uint32_t  Freq_Desidered){
-	uint32_t Timers_Clock;
-	uint32_t Timers_PSC;
-	uint32_t Timers_ClockPSCed;
+void Buck_Tim_Init(TIM_HandleTypeDef* BuckTIM, uint32_t  Freq_Desidered){
+	uint32_t Timers_Clock;                                                                ///
+	uint32_t Timers_PSC;                                                                  ///
+	uint32_t Timers_ClockPSCed;                                                           ///
 
-	Timers_PSC=(uint32_t)(READ_REG(BuckTIM.Instance->PSC));
-	Timers_Clock=HAL_RCC_GetPCLK2Freq();
-	Timers_ClockPSCed = (Timers_Clock/(Timers_PSC+1));
+	Timers_PSC=(uint32_t)(READ_REG(BuckTIM->Instance->PSC));                                ///
+	Timers_Clock=HAL_RCC_GetPCLK2Freq();                                                  ///
 
-	BuckTIM.Init.Period = ((Timers_ClockPSCed/Freq_Desidered) - 1);
+	Timers_ClockPSCed=(Timers_Clock/(Timers_PSC+1));                                      ///
+
+	BuckTIM->Instance = TIM1;
+	BuckTIM->Init.Prescaler = 0;
+	BuckTIM->Init.CounterMode = TIM_COUNTERMODE_UP;
+	BuckTIM->Init.Period = ((Timers_ClockPSCed/Freq_Desidered) - 1);
+	BuckTIM->Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+	BuckTIM->Init.RepetitionCounter = 0;
+	BuckTIM->Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+
+//	HAL_TIM_Base_Init(&BuckTIM);
+	//HAL_TIM_Base_Start_IT(&BuckTIM);
+
 }
 
+/**
+  * @brief  Buck_Tim_PWM_Init
+  * @param  BuckTIM
+  * @param  Freq_Desidered
+  *
+  * @retval None
+  *
+  * @note Function valid for STM32F1
+  */
+void Buck_Tim_PWM_Init(TIM_HandleTypeDef* BuckTIM, uint32_t  Freq_Desidered){
+	uint32_t Timers_Clock;                                                                ///
+	uint32_t Timers_PSC;                                                                  ///
+	uint32_t Timers_ClockPSCed;                                                           ///
+
+	Timers_PSC=(uint32_t)(READ_REG(BuckTIM->Instance->PSC));                                ///
+	Timers_Clock=HAL_RCC_GetPCLK2Freq();                                                  ///
+
+	Timers_ClockPSCed=(Timers_Clock/(Timers_PSC+1));                                      ///
+
+	BuckTIM->Instance = TIM1;
+	BuckTIM->Init.Prescaler = 0;
+	BuckTIM->Init.CounterMode = TIM_COUNTERMODE_UP;
+	BuckTIM->Init.Period = ((Timers_ClockPSCed/Freq_Desidered) - 1);
+	BuckTIM->Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+	BuckTIM->Init.RepetitionCounter = 0;
+	BuckTIM->Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+
+//	HAL_TIM_PWM_Init(&BuckTIM);
+}
 /**
   * @brief  Buck_PWM_Init
   * @param  BuckTIM
@@ -131,9 +171,45 @@ void DATA_Acquisition_from_DMA(uint32_t* p_ADC1_Data) {
 
 void ADC2Phy_VDC_ProcessData(ADC_Conf_TypeDef *ADC_Conf,uint32_t* p_Data_Sub, Cooked_ADC_Struct* Cooked_Values){
 
+	float B_Vdc=ADC_Conf->B_Vdc;
+	float G_Vdc=ADC_Conf->G_Vdc;
+	float invG_Vdc=ADC_Conf->invG_Vdc;
+
+	Cooked_Values->Vdc = ((float)((int16_t)p_Data_Sub[0]-B_Vdc)*(float)(invG_Vdc));
 
 }
 
 Cooked_ADC_Struct* Read_Volt_DC(void){
   return &Raw_ADC;
+}
+
+/**
+  * @brief  BUCK_ADC_Init
+  * @param  ADC_Conf_TypeDef
+  * @retval None
+  *
+  * @note Function valid for STM32G4xx microconroller family
+  */
+
+void BUCK_ADC_Init(ADC_Conf_TypeDef *BUCK_ADC_Conf,float G_Vac,float B_Vac,float G_Iac,float B_Iac,float G_Vdc,float B_Vdc,float G_Idc,float B_Idc){
+
+	BUCK_ADC_Conf->B_Vac=B_Vac;
+	BUCK_ADC_Conf->G_Vac=G_Vac;
+	BUCK_ADC_Conf->invG_Vac=(float)(1.0/G_Vac);
+
+	BUCK_ADC_Conf->B_Vdc=B_Vdc;
+	BUCK_ADC_Conf->G_Vdc=G_Vdc;
+	BUCK_ADC_Conf->invG_Vdc=(float)(1.0/G_Vdc);
+
+	BUCK_ADC_Conf->B_Iac=B_Iac;
+	BUCK_ADC_Conf->G_Iac=G_Iac;
+	BUCK_ADC_Conf->invG_Iac=(float)(1.0/G_Iac);
+
+	BUCK_ADC_Conf->B_Idc=B_Idc;
+	BUCK_ADC_Conf->G_Idc=G_Idc;
+	BUCK_ADC_Conf->invG_Idc=(float)(1.0/G_Idc);
+
+
+	BUCK_ADC_Conf->ADC_Conf_Complete=SET;
+
 }
