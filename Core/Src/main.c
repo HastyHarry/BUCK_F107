@@ -54,14 +54,20 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-uint32_t BUCK_PWM_SOURCE_A;
-uint32_t BUCK_PWM_SOURCE_B;
+BUCK_PWM_Source_Struct BUCK_PWM_SRC;
+
 float PID_Result;
 
 uint32_t p_ADC1_Data[ADC1_CHs];                                 /*!< */
 
+float Service_data[100];
+uint32_t service_step;
+
 ADC_Conf_TypeDef ADC_Conf;
 Cooked_ADC_Struct VDC_ADC_IN_PHY;
+PID_Control_Struct PID_CONF;
+PID_Control_Struct PID_CONF_Burst;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -118,7 +124,9 @@ int main(void)
   HAL_TIM_MspPostInit(&htim4);
 
   DPC_TO_Init();
+  Buck_PID_Init(&PID_CONF, BUCK_PID_K_P,BUCK_PID_K_I,BUCK_PID_K_D, BUCK_SW_Frequency, BUCK_PID_W_F, BUCK_PID_SAT_UP, BUCK_PID_SAT_DOWN);
 
+  Buck_PID_Init(&PID_CONF_Burst, BUCK_PID_K_P,BUCK_PID_K_I,BUCK_PID_K_D, BUCK_SW_Frequency, BUCK_PID_W_F, BUCK_PID_SAT_UP_BURST, BUCK_PID_SAT_DOWN_BURST);
 //  Buck_Tim_PWM_Init(&BUCK_Tim1, BUCK_SW_Frequency);
 //  Buck_Tim_PWM_Init(&BUCK_Tim4, BUCK_SW_Frequency);
 //  Buck_Tim_Init(&BUCK_Tim2, BUCK_Math_Frequency);
@@ -127,12 +135,12 @@ int main(void)
 
   BUCK_ADC_Init(&ADC_Conf,G_VAC,B_VAC,G_IAC,B_IAC,G_VDC,B_VDC,G_IDC,B_IDC);
 
-  HAL_TIM_PWM_Start_DMA(&BUCK_Tim1, BUCK_Tim1_PWM_CH, &BUCK_PWM_SOURCE_A, 1);
-  HAL_TIM_PWM_Start_DMA(&BUCK_Tim4, BUCK_Tim4_PWM_CH, &BUCK_PWM_SOURCE_B, 1);
+  HAL_TIM_PWM_Start_DMA(&BUCK_Tim1, BUCK_Tim1_PWM_CH, &BUCK_PWM_SRC.PWM_A, 1);
+  HAL_TIM_PWM_Start_DMA(&BUCK_Tim4, BUCK_Tim4_PWM_CH, &BUCK_PWM_SRC.PWM_B, 1);
   HAL_ADC_Start_DMA(&BUCK_ADC1, p_ADC1_Data, ADC1_CHs);
 
   HAL_TIM_Base_Start_IT(&htim2);
-  HAL_TIM_Base_Start_IT(&htim2);
+  HAL_TIM_Base_Start_IT(&htim3);
 
   /* USER CODE END 2 */
 
@@ -143,6 +151,17 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+
+//	TO_State=DPC_TO_Check(RELAY_TO_CH);
+//	if (TO_State==TO_OUT_TOOK){
+//	  HAL_GPIO_TogglePin(LED_H2_PORT, LED_H2);
+//	}
+//	else if (TO_State==TO_OUT_OK){
+//
+//	}
+//	else{
+//	  DPC_TO_Set(RELAY_TO_CH, RELAY_TIMEOUT);
+//	}
 //
   }
   /* USER CODE END 3 */
@@ -209,8 +228,27 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 		DATA_Acquisition_from_DMA(p_ADC1_Data);
 
 		ADC2Phy_VDC_ProcessData(&ADC_Conf,(uint32_t*)Read_Volt_DC(), &VDC_ADC_IN_PHY);
+		VDC_ADC_IN_PHY.Vdc=10;
 
-		PID_Result = Buck_Control(BUCK_VDC_REF, VDC_ADC_IN_PHY.Vdc, BUCK_PID_K_P,BUCK_PID_K_I,BUCK_PID_K_D, BUCK_SW_Frequency, BUCK_PID_W_F);
+		if ((float)(BUCK_VDC_REF - VDC_ADC_IN_PHY.Vdc) > 20){
+			PID_Result = Buck_Control(&PID_CONF_Burst,BUCK_VDC_REF, VDC_ADC_IN_PHY.Vdc);
+		}
+		else {
+			PID_Result = Buck_Control(&PID_CONF,BUCK_VDC_REF, VDC_ADC_IN_PHY.Vdc);
+		}
+
+		if (VDC_ADC_IN_PHY.Vdc>=BUCK_VDC_OV){
+			  HAL_TIM_PWM_Stop_DMA(&BUCK_Tim1, BUCK_Tim1_PWM_CH);
+			  HAL_TIM_PWM_Stop_DMA(&BUCK_Tim4, BUCK_Tim4_PWM_CH);
+		}
+		else if (VDC_ADC_IN_PHY.Vdc <= BUCK_VDC_REF_HIGH_REF){
+			  HAL_TIM_PWM_Start_DMA(&BUCK_Tim1, BUCK_Tim1_PWM_CH, &BUCK_PWM_SRC.PWM_A, 1);
+			  HAL_TIM_PWM_Start_DMA(&BUCK_Tim4, BUCK_Tim4_PWM_CH, &BUCK_PWM_SRC.PWM_B, 1);
+		}
+
+
+
+		BUCK_PWM_Processing(PID_Result, &BUCK_Tim1, &BUCK_PWM_SRC);
 
 	}
 	else if (htim ->Instance == TIM3){
