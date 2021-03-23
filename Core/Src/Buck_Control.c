@@ -67,13 +67,14 @@ void Buck_Tim_PWM_Init(TIM_HandleTypeDef* BuckTIM, uint32_t  Freq_Desidered){
 
 	Timers_ClockPSCed=(Timers_Clock/(Timers_PSC+1));                                      ///
 
-	BuckTIM->Instance = TIM1;
 	BuckTIM->Init.Prescaler = 0;
 	BuckTIM->Init.CounterMode = TIM_COUNTERMODE_UP;
 	BuckTIM->Init.Period = ((Timers_ClockPSCed/Freq_Desidered) - 1);
 	BuckTIM->Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
 	BuckTIM->Init.RepetitionCounter = 0;
 	BuckTIM->Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+
+	HAL_TIM_Base_Init(BuckTIM);
 
 //	HAL_TIM_PWM_Init(&BuckTIM);
 }
