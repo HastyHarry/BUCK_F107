@@ -159,13 +159,19 @@ float PID_Control(float Ref, float Feed, PID_Control_Struct* Conf_struct){
 //	Ui_prev = Conf_struct->Ui_previous;
 //	Ud_prev = Conf_struct->Ud_previous;
 
+	if (Conf_struct->resetPI == RESET){
+		Conf_struct->Ui_previous = 0;
+		Conf_struct->Ud_previous = 0;
+		Conf_struct->Err_pr = 0;
+	}
+
 	Err = Ref - Feed;
 
 	Up = Conf_struct->Kp * Err;
 	Ui = (Conf_struct->Ui_previous * 2 * Conf_struct->SW_Freq + (Err + Conf_struct->Err_pr)*Conf_struct->Ki) /(2 * Conf_struct->SW_Freq);
 	Ud = ((Err - Conf_struct->Err_pr)*Conf_struct->Kd * 2 * Conf_struct->SW_Freq * Conf_struct->Omega - Conf_struct->Ud_previous *(Conf_struct->Omega-2*Conf_struct->SW_Freq )) / (Conf_struct->Omega+2*Conf_struct->SW_Freq);
 
-	Result = Up+Ui+Ud;
+	Result = Up+Ui;//+Ud;
 
 	if (Result>=Conf_struct->Sat_Up){
 		Result = Conf_struct->Sat_Up;
@@ -190,8 +196,9 @@ float PID_Control(float Ref, float Feed, PID_Control_Struct* Conf_struct){
   */
 
 void DATA_Acquisition_from_DMA(uint32_t* p_ADC1_Data) {
-	Raw_ADC.Vdc = p_ADC1_Data[0];
+	Raw_ADC.Vdc = p_ADC1_Data[2];
 	Raw_ADC.Idc = p_ADC1_Data[1];
+	Raw_ADC.Vac = p_ADC1_Data[0];
 }
 
 /**
@@ -265,7 +272,7 @@ void BUCK_PWM_Processing(float PWM_Value, TIM_HandleTypeDef *PWM_Tim, BUCK_PWM_S
 	if (PWM_Value>1) PWM_Value=1;
 	else if (PWM_Value<0) PWM_Value=0;
 
-	Duty=(uint32_t)(PWM_Period * PWM_Value);
+	Duty=(uint32_t)(PWM_Period * (PWM_Value));
 	DMA_PWM_SOURCE->PWM_A = Duty;
 	DMA_PWM_SOURCE->PWM_B = Duty;
 }

@@ -153,6 +153,7 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	  HAL_ADC_Start_DMA(&BUCK_ADC1, p_ADC1_Data, ADC1_CHs);
 
 //	TO_State=DPC_TO_Check(RELAY_TO_CH);
 //	if (TO_State==TO_OUT_TOOK){
@@ -231,28 +232,32 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 
 		ADC2Phy_VDC_ProcessData(&ADC_Conf,(uint32_t*)Read_Volt_DC(), &VDC_ADC_IN_PHY);
 		//VDC_ADC_IN_PHY.Vdc=10;
-
-//		if ((float)(BUCK_VDC_REF - VDC_ADC_IN_PHY.Vdc) > 20){
-//			PID_Result = Buck_Control(&PID_CONF_Burst,BUCK_VDC_REF, VDC_ADC_IN_PHY.Vdc);
-//		}
-//		else {
-//			PID_Result = Buck_Control(&PID_CONF,BUCK_VDC_REF, VDC_ADC_IN_PHY.Vdc);
-//		}
+		//VDC_ADC_IN_PHY.Vdc = 90;
+		if ((float)((float)BUCK_VDC_REF - (float)VDC_ADC_IN_PHY.Vdc) > 50){
+			PID_Result = Buck_Control(&PID_CONF_Burst,BUCK_VDC_REF, VDC_ADC_IN_PHY.Vdc);
+			PID_CONF.resetPI = RESET;
+		}
+		else {
+			PID_Result = Buck_Control(&PID_CONF,BUCK_VDC_REF, VDC_ADC_IN_PHY.Vdc);
+			PID_CONF_Burst.resetPI = RESET;
+		}
 
 //		HAL_TIM_PWM_Start_DMA(&BUCK_Tim1, BUCK_Tim1_PWM_CH, &BUCK_PWM_SRC.PWM_A, 1);
 //		HAL_TIM_PWM_Start_DMA(&BUCK_Tim4, BUCK_Tim4_PWM_CH, &BUCK_PWM_SRC.PWM_B, 1);
 
+
+
 		if (VDC_ADC_IN_PHY.Vdc>=BUCK_VDC_OV){
-//			HAL_TIM_PWM_Stop_DMA(&BUCK_Tim1, BUCK_Tim1_PWM_CH);
+			HAL_TIMEx_PWMN_Stop_DMA(&BUCK_Tim1, BUCK_Tim1_PWM_CH);
 			HAL_TIM_PWM_Stop_DMA(&BUCK_Tim4, BUCK_Tim4_PWM_CH);
 		}
-		else if (VDC_ADC_IN_PHY.Vdc <= BUCK_VDC_REF_HIGH_REF){
-//			HAL_TIM_PWM_Start_DMA(&BUCK_Tim1, BUCK_Tim1_PWM_CH, &BUCK_PWM_SRC.PWM_A, 1);
+		else if (VDC_ADC_IN_PHY.Vdc <= BUCK_VDC_REF_LOW_REF){
+			HAL_TIMEx_PWMN_Start_DMA(&BUCK_Tim1, BUCK_Tim1_PWM_CH, &BUCK_PWM_SRC.PWM_A, 1);
 			HAL_TIM_PWM_Start_DMA(&BUCK_Tim4, BUCK_Tim4_PWM_CH, &BUCK_PWM_SRC.PWM_B, 1);
 		}
 
 
-		PID_Result = 0.1;
+//		PID_Result = 0.1;
 		BUCK_PWM_Processing(PID_Result, &BUCK_Tim1, &BUCK_PWM_SRC);
 
 	}

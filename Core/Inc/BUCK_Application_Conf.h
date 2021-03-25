@@ -19,11 +19,11 @@
 #define BUCK_Tim1_PWM_CH 				TIM_CHANNEL_3
 #define BUCK_Tim4_PWM_CH 				TIM_CHANNEL_2
 
-#define ADC1_CHs						2
+#define ADC1_CHs						3
 #define BUCK_ADC1 						hadc1
 
-#define BUCK_VDC_REF					200
-#define BUCK_VDC_OV						250
+#define BUCK_VDC_REF					100
+#define BUCK_VDC_OV						150
 #define BUCK_VDC_HIST					10												/*!< value in %*/
 #define BUCK_VDC_REF_LOW_REF			BUCK_VDC_REF-(BUCK_VDC_REF*BUCK_VDC_HIST/100)
 #define BUCK_VDC_REF_HIGH_REF			BUCK_VDC_REF+(BUCK_VDC_REF*BUCK_VDC_HIST/100)
@@ -35,14 +35,14 @@
 #define BUCK_PID_SAT_UP					0.5
 #define BUCK_PID_SAT_DOWN				0.0
 
-#define BUCK_PID_SAT_UP_BURST			0.1
+#define BUCK_PID_SAT_UP_BURST			0.3
 #define BUCK_PID_SAT_DOWN_BURST			0.0
 
 #define G_VAC                           4.25//4.708                                     /*!< Gain terms of the AC voltage sensing */
 #define B_VAC                           1975                                            /*!< Bias terms of the AC voltage sensing */
 #define G_IAC                           32.5//42.67                                     /*!< Gain terms of the AC current sensing */
 #define B_IAC                           1958                                            /*!< Bias terms of the AC current sensing */
-#define G_VDC                           7.87//7.726                                     /*!< Gain terms of the DC voltage sensing */
+#define G_VDC                           5.9//7.726                                     /*!< Gain terms of the DC voltage sensing */
 #define B_VDC                           0                                               /*!< Bias terms of the DC voltage sensing */
 #define G_IDC                           102.4                                           /*!< Gain terms of the DC current sensing */
 #define B_IDC                           2048                                            /*!< Bias terms of the DC current sensing */

@@ -28,6 +28,7 @@ float Ud_previous;
 float Sat_Up;
 float Sat_Down;
 FlagStatus Init_Complete;
+FlagStatus resetPI;
 }PID_Control_Struct;
 
 typedef struct{
