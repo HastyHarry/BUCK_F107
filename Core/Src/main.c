@@ -57,6 +57,7 @@
 BUCK_PWM_Source_Struct BUCK_PWM_SRC;
 
 float PID_Result;
+uint16_t Tim_Counter;
 
 uint32_t p_ADC1_Data[ADC1_CHs];                                 /*!< */
 
@@ -232,16 +233,19 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 
 		ADC2Phy_VDC_ProcessData(&ADC_Conf,(uint32_t*)Read_Volt_DC(), &VDC_ADC_IN_PHY);
 		//VDC_ADC_IN_PHY.Vdc=10;
-		//VDC_ADC_IN_PHY.Vdc = 90;
-		if ((float)((float)BUCK_VDC_REF - (float)VDC_ADC_IN_PHY.Vdc) > 50){
-			PID_Result = Buck_Control(&PID_CONF_Burst,BUCK_VDC_REF, VDC_ADC_IN_PHY.Vdc);
-			PID_CONF.resetPI = RESET;
+		//VDC_ADC_IN_PHY.Vdc = 0;
+		if (Tim_Counter==9){
+			if ((float)((float)BUCK_VDC_REF - (float)VDC_ADC_IN_PHY.Vdc) > 50){
+				PID_Result = Buck_Control(&PID_CONF_Burst,BUCK_VDC_REF, VDC_ADC_IN_PHY.Vdc);
+				PID_CONF.resetPI = RESET;
+			}
+			else {
+				PID_Result = Buck_Control(&PID_CONF,BUCK_VDC_REF, VDC_ADC_IN_PHY.Vdc);
+				PID_CONF_Burst.resetPI = RESET;
+			}
+			Tim_Counter=0;
 		}
-		else {
-			PID_Result = Buck_Control(&PID_CONF,BUCK_VDC_REF, VDC_ADC_IN_PHY.Vdc);
-			PID_CONF_Burst.resetPI = RESET;
-		}
-
+		else Tim_Counter++;
 //		HAL_TIM_PWM_Start_DMA(&BUCK_Tim1, BUCK_Tim1_PWM_CH, &BUCK_PWM_SRC.PWM_A, 1);
 //		HAL_TIM_PWM_Start_DMA(&BUCK_Tim4, BUCK_Tim4_PWM_CH, &BUCK_PWM_SRC.PWM_B, 1);
 
@@ -257,7 +261,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 		}
 
 
-//		PID_Result = 0.1;
+		//PID_Result = 1.0;
 		BUCK_PWM_Processing(PID_Result, &BUCK_Tim1, &BUCK_PWM_SRC);
 
 	}

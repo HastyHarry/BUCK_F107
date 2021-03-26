@@ -11,7 +11,6 @@
 /* Private variables ---------------------------------------------------------*/
 
 RAW_ADC_Struct Raw_ADC;
-RAW_ADC_Struct Cooked_ADC;
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private function prototypes -----------------------------------------------*/
@@ -196,10 +195,33 @@ float PID_Control(float Ref, float Feed, PID_Control_Struct* Conf_struct){
   */
 
 void DATA_Acquisition_from_DMA(uint32_t* p_ADC1_Data) {
-	Raw_ADC.Vdc = p_ADC1_Data[2];
-	Raw_ADC.Idc = p_ADC1_Data[1];
-	Raw_ADC.Vac = p_ADC1_Data[0];
+	uint16_t i;
+	uint16_t MA_Period;
+	float Value1;
+	float Value2;
+	float Value3;
+
+	MA_Period=10;
+
+	Raw_ADC.Vdc[Raw_ADC.MA_Counter] = p_ADC1_Data[1];
+	Raw_ADC.Idc[Raw_ADC.MA_Counter] = p_ADC1_Data[2];
+	Raw_ADC.Vac[Raw_ADC.MA_Counter] = p_ADC1_Data[0];
+	Raw_ADC.MA_Counter++;
+	if (Raw_ADC.MA_Counter>=MA_Period){
+		Raw_ADC.MA_Counter=0;
+	}
+
+	for (i=0;i<MA_Period;i++){
+		Value1 = Value1 + Raw_ADC.Vdc[i];
+		Value2 = Value2 + Raw_ADC.Vac[i];
+		Value3 = Value3 + Raw_ADC.Idc[i];
+	}
+	Raw_ADC.Vdc_MA = (float)(Value1/(float)(MA_Period));
+	Raw_ADC.Vac_MA = (float)(Value2/(float)(MA_Period));
+	Raw_ADC.Idc_MA = (float)(Value3/(float)(MA_Period));
 }
+
+
 
 /**
   * @brief  ADC2Phy_VDC_ProcessData

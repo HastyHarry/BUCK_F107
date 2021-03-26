@@ -32,10 +32,15 @@ FlagStatus resetPI;
 }PID_Control_Struct;
 
 typedef struct{
-  uint32_t Vdc;
-  uint32_t Vac;
-  uint32_t Idc;
+  uint32_t Vdc[20];
+  uint32_t Vac[20];
+  uint32_t Idc[20];
+  uint32_t MA_Counter;
+  float Vdc_MA;
+  float Vac_MA;
+  float Idc_MA;
 }RAW_ADC_Struct;
+
 
 typedef struct{
   uint32_t Vdc;

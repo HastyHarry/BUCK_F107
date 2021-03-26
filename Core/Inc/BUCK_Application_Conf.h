@@ -13,7 +13,7 @@
 #define BUCK_Tim4                       htim4
 
 #define BUCK_SW_Frequency				10000											/*!<Switching Freq*/
-#define BUCK_Math_Frequency				10000											/*!<Calculations Freq*/
+#define BUCK_Math_Frequency				100000											/*!<Calculations Freq*/
 #define BUCK_TO_Timer_Frequency			1000											/*!<TO Freq*/
 
 #define BUCK_Tim1_PWM_CH 				TIM_CHANNEL_3
@@ -32,7 +32,7 @@
 #define BUCK_PID_K_I					1
 #define BUCK_PID_K_D					0.0001
 #define BUCK_PID_W_F					2*PI*BUCK_SW_Frequency/10
-#define BUCK_PID_SAT_UP					0.5
+#define BUCK_PID_SAT_UP					1.0
 #define BUCK_PID_SAT_DOWN				0.0
 
 #define BUCK_PID_SAT_UP_BURST			0.3
@@ -42,7 +42,7 @@
 #define B_VAC                           1975                                            /*!< Bias terms of the AC voltage sensing */
 #define G_IAC                           32.5//42.67                                     /*!< Gain terms of the AC current sensing */
 #define B_IAC                           1958                                            /*!< Bias terms of the AC current sensing */
-#define G_VDC                           5.9//7.726                                     /*!< Gain terms of the DC voltage sensing */
+#define G_VDC                           5.4//7.726                                     /*!< Gain terms of the DC voltage sensing */
 #define B_VDC                           0                                               /*!< Bias terms of the DC voltage sensing */
 #define G_IDC                           102.4                                           /*!< Gain terms of the DC current sensing */
 #define B_IDC                           2048                                            /*!< Bias terms of the DC current sensing */
