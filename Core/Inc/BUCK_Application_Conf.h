@@ -11,16 +11,21 @@
 #define BUCK_Tim2                       htim2
 #define BUCK_Tim3                       htim3
 #define BUCK_Tim4                       htim4
+#define BUCK_Tim5                       htim5
+#define BUCK_Tim4_OC_CH					TIM_CHANNEL_4
+#define BUCK_Tim5_OC_CH					TIM_CHANNEL_1									/*!<Not in USE>*/
 
 #define BUCK_SW_Frequency				10000											/*!<Switching Freq*/
-#define BUCK_Math_Frequency				100000											/*!<Calculations Freq*/
+#define BUCK_Math_Frequency				10000											/*!<Calculations Freq*/
 #define BUCK_TO_Timer_Frequency			1000											/*!<TO Freq*/
 
 #define BUCK_Tim1_PWM_CH 				TIM_CHANNEL_3
 #define BUCK_Tim4_PWM_CH 				TIM_CHANNEL_2
 
 #define ADC1_CHs						3
+#define ADC1_MA_PERIOD					10
 #define BUCK_ADC1 						hadc1
+
 
 #define BUCK_VDC_REF					100
 #define BUCK_VDC_OV						150

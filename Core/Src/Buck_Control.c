@@ -7,6 +7,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "Buck_Control.h"
 #include "tim.h"
+#include "BUCK_Application_Conf.h"
 
 /* Private variables ---------------------------------------------------------*/
 
@@ -34,15 +35,15 @@ void Buck_Tim_Init(TIM_HandleTypeDef* BuckTIM, uint32_t  Freq_Desidered){
 
 	Timers_ClockPSCed=(Timers_Clock/(Timers_PSC+1));                                      ///
 
-	BuckTIM->Instance = TIM1;
-	BuckTIM->Init.Prescaler = 0;
+
+	BuckTIM->Init.Prescaler = Timers_PSC;
 	BuckTIM->Init.CounterMode = TIM_COUNTERMODE_UP;
 	BuckTIM->Init.Period = ((Timers_ClockPSCed/Freq_Desidered) - 1);
 	BuckTIM->Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
 	BuckTIM->Init.RepetitionCounter = 0;
 	BuckTIM->Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
 
-//	HAL_TIM_Base_Init(&BuckTIM);
+	HAL_TIM_Base_Init(BuckTIM);
 	//HAL_TIM_Base_Start_IT(&BuckTIM);
 
 }
@@ -196,29 +197,30 @@ float PID_Control(float Ref, float Feed, PID_Control_Struct* Conf_struct){
 
 void DATA_Acquisition_from_DMA(uint32_t* p_ADC1_Data) {
 	uint16_t i;
-	uint16_t MA_Period;
+//	uint16_t MA_Period;
 	float Value1;
 	float Value2;
 	float Value3;
 
-	MA_Period=10;
+//	MA_Period=10;
+//
+//	Raw_ADC.Vdc[Raw_ADC.MA_Counter] = p_ADC1_Data[1];
+//	Raw_ADC.Idc[Raw_ADC.MA_Counter] = p_ADC1_Data[2];
+//	Raw_ADC.Vac[Raw_ADC.MA_Counter] = p_ADC1_Data[0];
+//	Raw_ADC.MA_Counter++;
+//	if (Raw_ADC.MA_Counter>=MA_Period){
+//		Raw_ADC.MA_Counter=0;
+//	}
 
-	Raw_ADC.Vdc[Raw_ADC.MA_Counter] = p_ADC1_Data[1];
-	Raw_ADC.Idc[Raw_ADC.MA_Counter] = p_ADC1_Data[2];
-	Raw_ADC.Vac[Raw_ADC.MA_Counter] = p_ADC1_Data[0];
-	Raw_ADC.MA_Counter++;
-	if (Raw_ADC.MA_Counter>=MA_Period){
-		Raw_ADC.MA_Counter=0;
+	for (i=0;i<ADC1_MA_PERIOD;i++){
+		Value1 = Value1 + p_ADC1_Data[i*ADC1_CHs];
+		Value2 = Value2 + p_ADC1_Data[i*ADC1_CHs+1];
+		Value3 = Value3 + p_ADC1_Data[i*ADC1_CHs+2];
 	}
 
-	for (i=0;i<MA_Period;i++){
-		Value1 = Value1 + Raw_ADC.Vdc[i];
-		Value2 = Value2 + Raw_ADC.Vac[i];
-		Value3 = Value3 + Raw_ADC.Idc[i];
-	}
-	Raw_ADC.Vdc_MA = (float)(Value1/(float)(MA_Period));
-	Raw_ADC.Vac_MA = (float)(Value2/(float)(MA_Period));
-	Raw_ADC.Idc_MA = (float)(Value3/(float)(MA_Period));
+	Raw_ADC.Vac_MA = (float)(Value1/(float)(ADC1_MA_PERIOD));
+	Raw_ADC.Vdc_MA = (float)(Value2/(float)(ADC1_MA_PERIOD));
+	Raw_ADC.Idc_MA = (float)(Value3/(float)(ADC1_MA_PERIOD));
 }
 
 
@@ -230,13 +232,13 @@ void DATA_Acquisition_from_DMA(uint32_t* p_ADC1_Data) {
   * @param  Cooked_Values
   * @retval Cooked_Values
   */
-void ADC2Phy_VDC_ProcessData(ADC_Conf_TypeDef *ADC_Conf,uint32_t* p_Data_Sub, Cooked_ADC_Struct* Cooked_Values){
+void ADC2Phy_VDC_ProcessData(ADC_Conf_TypeDef *ADC_Conf, RAW_ADC_Struct* p_Data_Sub, Cooked_ADC_Struct* Cooked_Values){
 
 	float B_Vdc=ADC_Conf->B_Vdc;
 	float G_Vdc=ADC_Conf->G_Vdc;
 	float invG_Vdc=ADC_Conf->invG_Vdc;
 
-	Cooked_Values->Vdc = ((float)((int16_t)p_Data_Sub[0]-B_Vdc)*(float)(invG_Vdc));
+	Cooked_Values->Vdc = ((float)((int16_t)p_Data_Sub->Vdc_MA-B_Vdc)*(float)(invG_Vdc));
 
 }
 
@@ -246,7 +248,7 @@ void ADC2Phy_VDC_ProcessData(ADC_Conf_TypeDef *ADC_Conf,uint32_t* p_Data_Sub, Co
   * @retval Cooked_ADC_Struct
   */
 
-Cooked_ADC_Struct* Read_Volt_DC(void){
+RAW_ADC_Struct* Read_Volt_DC(void){
   return &Raw_ADC;
 }
 
@@ -297,4 +299,23 @@ void BUCK_PWM_Processing(float PWM_Value, TIM_HandleTypeDef *PWM_Tim, BUCK_PWM_S
 	Duty=(uint32_t)(PWM_Period * (PWM_Value));
 	DMA_PWM_SOURCE->PWM_A = Duty;
 	DMA_PWM_SOURCE->PWM_B = Duty;
+}
+
+void ADC_Trigger_Init(uint32_t Pulse_Val){
+
+	TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+	  TIM_MasterConfigTypeDef sMasterConfig = {0};
+	  TIM_OC_InitTypeDef sConfigOC = {0};
+	  TIM_BreakDeadTimeConfigTypeDef sBreakDeadTimeConfig = {0};
+
+
+	  sConfigOC.OCMode = TIM_OCMODE_ACTIVE;
+	  sConfigOC.Pulse = Pulse_Val;
+	  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+	  sConfigOC.OCNPolarity = TIM_OCNPOLARITY_HIGH;
+	  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+	  sConfigOC.OCIdleState = TIM_OCIDLESTATE_RESET;
+	  sConfigOC.OCNIdleState = TIM_OCNIDLESTATE_RESET;
+	  HAL_TIM_OC_ConfigChannel(&htim1, &sConfigOC, TIM_CHANNEL_1);
+
 }
