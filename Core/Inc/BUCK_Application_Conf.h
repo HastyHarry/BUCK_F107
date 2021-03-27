@@ -47,7 +47,7 @@
 #define B_VAC                           1975                                            /*!< Bias terms of the AC voltage sensing */
 #define G_IAC                           32.5//42.67                                     /*!< Gain terms of the AC current sensing */
 #define B_IAC                           1958                                            /*!< Bias terms of the AC current sensing */
-#define G_VDC                           5.4//7.726                                     /*!< Gain terms of the DC voltage sensing */
+#define G_VDC                           8.4//7.726                                     /*!< Gain terms of the DC voltage sensing */
 #define B_VDC                           0                                               /*!< Bias terms of the DC voltage sensing */
 #define G_IDC                           102.4                                           /*!< Gain terms of the DC current sensing */
 #define B_IDC                           2048                                            /*!< Bias terms of the DC current sensing */
