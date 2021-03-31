@@ -33,14 +33,25 @@ extern "C" {
 
 extern CAN_HandleTypeDef hcan1;
 
+
+
 /* USER CODE BEGIN Private defines */
+CAN_FilterTypeDef  sFilterConfig;
+CAN_TxHeaderTypeDef   TxHeader;
+CAN_RxHeaderTypeDef   RxHeader;
+
+typedef struct{
+	uint32_t Can1_Ready_To_Send;
+	uint8_t Can1_Message[8];
+}CAN_Messages_Struct;
 
 /* USER CODE END Private defines */
 
 void MX_CAN1_Init(void);
 
 /* USER CODE BEGIN Prototypes */
-
+void CAN_Filter_Init();
+void CAN_Start_Setup();
 /* USER CODE END Prototypes */
 
 #ifdef __cplusplus

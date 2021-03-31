@@ -41,6 +41,13 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define LoWord(param) ((unsigned *)&param)[0]
+#define HiWord(param) ((unsigned *)&param)[1]
+
+#define Lowest(param) ((uint8_t *)&param)[0]
+#define Lo(param) 	  ((uint8_t *)&param)[1]
+#define Hi(param) 	  ((uint8_t *)&param)[2]
+#define Highest(param)((uint8_t *)&param)[3]
 
 #define LED_H2 GPIO_PIN_10
 #define LED_H2_PORT GPIOE
@@ -56,6 +63,12 @@
 /* USER CODE BEGIN PV */
 BUCK_PWM_Source_Struct BUCK_PWM_SRC;
 BUCK_OC_Source_Struct BUCK_OC_SRC;
+
+CAN_Messages_Struct CAN_Messages;
+uint8_t               TxData[8];
+uint8_t               RxData[8];
+uint32_t              TxMailbox;
+
 
 float PID_Result;
 uint16_t Tim_Counter;
@@ -137,7 +150,7 @@ int main(void)
 
 
   BUCK_ADC_Init(&ADC_Conf,G_VAC,B_VAC,G_IAC,B_IAC,G_VDC,B_VDC,G_IDC,B_IDC);
-
+  CAN_Start_Setup();
   HAL_TIMEx_PWMN_Start_DMA(&BUCK_Tim1, BUCK_Tim1_PWM_CH, &BUCK_PWM_SRC.PWM_A, 1);
 
 //  HAL_TIM_PWM_Start_DMA(&BUCK_Tim4, BUCK_Tim4_PWM_CH, &BUCK_PWM_SRC.PWM_B, 1);
@@ -149,6 +162,8 @@ int main(void)
 
   HAL_TIM_OC_Init(&BUCK_Tim1);
   HAL_TIM_OC_Start(&BUCK_Tim1, TIM_CHANNEL_1);
+
+
 
 //  HAL_TIM_OC_Init(&BUCK_Tim4);
 //  HAL_TIM_OC_Start_DMA(&BUCK_Tim4, BUCK_Tim4_OC_CH, &BUCK_OC_SRC.OC1, 1);
@@ -280,9 +295,46 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 		ADC_Trigger_Init(BUCK_OC_SRC.OC1);
 	}
 	else if (htim ->Instance == TIM3){
+
+		TxHeader.StdId = 0x321;
+		TxHeader.ExtId = 0x01;
+		TxHeader.RTR = CAN_RTR_DATA;
+		TxHeader.IDE = CAN_ID_STD;
+		TxHeader.DLC = 4;
+		TxHeader.TransmitGlobalTime = DISABLE;
+		TxData[0] = Highest(VDC_ADC_IN_PHY.Vdc);
+		TxData[1] = Hi(VDC_ADC_IN_PHY.Vdc);
+		TxData[2] = Lo(VDC_ADC_IN_PHY.Vdc);
+		TxData[3] = Lowest(VDC_ADC_IN_PHY.Vdc);
+		TxMailbox = 1;
+		HAL_GPIO_TogglePin(LED_H2_PORT, LED_H2);
+		if (HAL_CAN_AddTxMessage(&hcan1, &TxHeader, TxData, &TxMailbox) != HAL_OK)
+			{
+			/* Transmission request Error */
+				Error_Handler();
+			}
 		TimeoutMng();
 	}
 }
+
+//void HAL_CAN_TxCpltCallback(CAN_HandleTypeDef* CanHandle){
+//
+//	if(CanHandle->Instance == CAN1){
+//
+//	}
+//}
+
+void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *CanHandle)
+{
+
+  if ((RxHeader.StdId == 0x321) && (RxHeader.IDE == CAN_ID_STD) && (RxHeader.DLC == 8))
+  {
+
+  }
+}
+
+
+
 
 
 
