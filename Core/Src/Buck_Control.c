@@ -171,7 +171,7 @@ float PID_Control(float Ref, float Feed, PID_Control_Struct* Conf_struct){
 	Ui = (Conf_struct->Ui_previous * 2 * Conf_struct->SW_Freq + (Err + Conf_struct->Err_pr)*Conf_struct->Ki) /(2 * Conf_struct->SW_Freq);
 	Ud = ((Err - Conf_struct->Err_pr)*Conf_struct->Kd * 2 * Conf_struct->SW_Freq * Conf_struct->Omega - Conf_struct->Ud_previous *(Conf_struct->Omega-2*Conf_struct->SW_Freq )) / (Conf_struct->Omega+2*Conf_struct->SW_Freq);
 
-	Result = Up+Ui;//+Ud;
+	Result = Up+Ui+Ud;
 
 	if (Result>=Conf_struct->Sat_Up){
 		Result = Conf_struct->Sat_Up;
@@ -213,14 +213,14 @@ void DATA_Acquisition_from_DMA(uint32_t* p_ADC1_Data) {
 //	}
 
 	for (i=0;i<ADC1_MA_PERIOD;i++){
-		Value1 = Value1 + p_ADC1_Data[i*ADC1_CHs];
+		//Value1 = Value1 + p_ADC1_Data[i*ADC1_CHs];
 		Value2 = Value2 + p_ADC1_Data[i*ADC1_CHs+1];
-		Value3 = Value3 + p_ADC1_Data[i*ADC1_CHs+2];
+		//Value3 = Value3 + p_ADC1_Data[i*ADC1_CHs+2];
 	}
 
-	Raw_ADC.Vac_MA = (float)(Value1/(float)(ADC1_MA_PERIOD));
+	//Raw_ADC.Vac_MA = (float)(Value1/(float)(ADC1_MA_PERIOD));
 	Raw_ADC.Vdc_MA = (float)(Value2/(float)(ADC1_MA_PERIOD));
-	Raw_ADC.Idc_MA = (float)(Value3/(float)(ADC1_MA_PERIOD));
+	//Raw_ADC.Idc_MA = (float)(Value3/(float)(ADC1_MA_PERIOD));
 }
 
 
@@ -238,7 +238,7 @@ void ADC2Phy_VDC_ProcessData(ADC_Conf_TypeDef *ADC_Conf, RAW_ADC_Struct* p_Data_
 	float G_Vdc=ADC_Conf->G_Vdc;
 	float invG_Vdc=ADC_Conf->invG_Vdc;
 
-	Cooked_Values->Vdc = ((float)((int16_t)p_Data_Sub->Vdc_MA-B_Vdc)*(float)(invG_Vdc));
+	Cooked_Values->Vdc = ((float)((int16_t)p_Data_Sub->Vdc_MA-B_Vdc)*(float)(G_Vdc));
 
 }
 

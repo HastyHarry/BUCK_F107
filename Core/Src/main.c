@@ -69,8 +69,11 @@ uint8_t               TxData[8];
 uint8_t               RxData[8];
 uint32_t              TxMailbox;
 
+TO_RET_STATE TO_State;
+
 
 float PID_Result;
+uint16_t Duty_To_Send;
 uint16_t Tim_Counter;
 
 uint32_t p_ADC1_Data[ADC1_MA_PERIOD*ADC1_CHs];                                 /*!< */
@@ -181,6 +184,8 @@ int main(void)
     /* USER CODE BEGIN 3 */
 	  //HAL_ADC_Start_DMA(&BUCK_ADC1, p_ADC1_Data, ADC1_CHs);
 
+
+
 //	TO_State=DPC_TO_Check(RELAY_TO_CH);
 //	if (TO_State==TO_OUT_TOOK){
 //	  HAL_GPIO_TogglePin(LED_H2_PORT, LED_H2);
@@ -276,14 +281,14 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 
 
 
-		if (VDC_ADC_IN_PHY.Vdc>=BUCK_VDC_OV){
+		if (VDC_ADC_IN_PHY.Vdc>=250){
 			HAL_TIMEx_PWMN_Stop_DMA(&BUCK_Tim1, BUCK_Tim1_PWM_CH);
 //			HAL_TIM_PWM_Stop_DMA(&BUCK_Tim4, BUCK_Tim4_PWM_CH);
 		}
-		else if (VDC_ADC_IN_PHY.Vdc <= BUCK_VDC_REF_LOW_REF){
-			HAL_TIMEx_PWMN_Start_DMA(&BUCK_Tim1, BUCK_Tim1_PWM_CH, &BUCK_PWM_SRC.PWM_A, 1);
-//			HAL_TIM_PWM_Start_DMA(&BUCK_Tim4, BUCK_Tim4_PWM_CH, &BUCK_PWM_SRC.PWM_B, 1);
-		}
+//		else if (VDC_ADC_IN_PHY.Vdc <= BUCK_VDC_REF_LOW_REF){
+//			HAL_TIMEx_PWMN_Start_DMA(&BUCK_Tim1, BUCK_Tim1_PWM_CH, &BUCK_PWM_SRC.PWM_A, 1);
+////			HAL_TIM_PWM_Start_DMA(&BUCK_Tim4, BUCK_Tim4_PWM_CH, &BUCK_PWM_SRC.PWM_B, 1);
+//		}
 
 
 		//PID_Result = 1.0;
@@ -295,25 +300,44 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 		ADC_Trigger_Init(BUCK_OC_SRC.OC1);
 	}
 	else if (htim ->Instance == TIM3){
+		TimeoutMng();
 
-		TxHeader.StdId = 0x321;
-		TxHeader.ExtId = 0x01;
-		TxHeader.RTR = CAN_RTR_DATA;
-		TxHeader.IDE = CAN_ID_STD;
-		TxHeader.DLC = 4;
-		TxHeader.TransmitGlobalTime = DISABLE;
-		TxData[0] = Highest(VDC_ADC_IN_PHY.Vdc);
-		TxData[1] = Hi(VDC_ADC_IN_PHY.Vdc);
-		TxData[2] = Lo(VDC_ADC_IN_PHY.Vdc);
-		TxData[3] = Lowest(VDC_ADC_IN_PHY.Vdc);
-		TxMailbox = 1;
-		HAL_GPIO_TogglePin(LED_H2_PORT, LED_H2);
-		if (HAL_CAN_AddTxMessage(&hcan1, &TxHeader, TxData, &TxMailbox) != HAL_OK)
+
+		TO_State=DPC_TO_Check(1);
+		if (TO_State==TO_OUT_TOOK){
+			TxHeader.StdId = 0x321;
+			TxHeader.ExtId = 0x01;
+			TxHeader.RTR = CAN_RTR_DATA;
+			TxHeader.IDE = CAN_ID_STD;
+			TxHeader.DLC = 8;
+			TxHeader.TransmitGlobalTime = DISABLE;
+			Duty_To_Send = (uint16_t)(PID_Result*100);
+			//TxData[0] = Highest(VDC_ADC_IN_PHY.Vdc);
+			//TxData[1] = Hi(VDC_ADC_IN_PHY.Vdc);
+			TxData[0] = Lo(Duty_To_Send);
+			TxData[1] = Lowest(Duty_To_Send);
+
+			//TxData[0] = Highest(VDC_ADC_IN_PHY.Vdc);
+			//TxData[1] = Hi(VDC_ADC_IN_PHY.Vdc);
+			TxData[2] = Lo(VDC_ADC_IN_PHY.Vdc);
+			TxData[3] = Lowest(VDC_ADC_IN_PHY.Vdc);
+
+
+
+			TxMailbox = 1;
+			if (HAL_CAN_AddTxMessage(&hcan1, &TxHeader, TxData, &TxMailbox) != HAL_OK)
 			{
-			/* Transmission request Error */
 				Error_Handler();
 			}
-		TimeoutMng();
+			DPC_TO_Set(1, 100);
+
+		}
+		else if (TO_State==TO_OUT_OK){
+
+		}
+		else{
+			DPC_TO_Set(1, 500);
+		}
 	}
 }
 
@@ -357,6 +381,8 @@ void Error_Handler(void)
   /* USER CODE BEGIN Error_Handler_Debug */
   /* User can add his own implementation to report the HAL error return state */
   __disable_irq();
+  HAL_GPIO_WritePin(LED_H2_PORT, LED_H2,1);
+  HAL_TIMEx_PWMN_Stop_DMA(&BUCK_Tim1, BUCK_Tim1_PWM_CH);
   while (1)
   {
   }
