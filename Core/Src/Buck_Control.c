@@ -211,7 +211,7 @@ void DATA_Acquisition_from_DMA(uint32_t* p_ADC1_Data) {
 //	if (Raw_ADC.MA_Counter>=MA_Period){
 //		Raw_ADC.MA_Counter=0;
 //	}
-
+	Value2 = 0;
 	for (i=0;i<ADC1_MA_PERIOD;i++){
 		//Value1 = Value1 + p_ADC1_Data[i*ADC1_CHs];
 		Value2 = Value2 + p_ADC1_Data[i*ADC1_CHs+1];

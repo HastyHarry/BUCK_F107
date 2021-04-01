@@ -71,6 +71,10 @@ uint32_t              TxMailbox;
 
 TO_RET_STATE TO_State;
 
+uint32_t Service_Data[500];
+uint32_t Service_step;
+uint32_t Service_step2;
+
 
 float PID_Result;
 uint16_t Duty_To_Send;
@@ -259,7 +263,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 	if (htim ->Instance == TIM2){
 		//HAL_GPIO_WritePin(LED_H2_PORT, LED_H2, GPIO_PIN_SET);
 //		HAL_GPIO_TogglePin(LED_H2_PORT, LED_H2);
-		DATA_Acquisition_from_DMA(p_ADC1_Data);
+		//DATA_Acquisition_from_DMA(p_ADC1_Data);
 
 		ADC2Phy_VDC_ProcessData(&ADC_Conf,(RAW_ADC_Struct*)Read_Volt_DC(), &VDC_ADC_IN_PHY);
 		//VDC_ADC_IN_PHY.Vdc=10;
@@ -298,6 +302,16 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 		BUCK_PWM_Processing(PID_Result, &BUCK_Tim1, &BUCK_PWM_SRC);
 		BUCK_OC_SRC.OC1 = (uint32_t)((float)BUCK_PWM_SRC.PWM_A/2);
 		ADC_Trigger_Init(BUCK_OC_SRC.OC1);
+
+
+//		Service_Data[Service_step] = VDC_ADC_IN_PHY.Vdc;
+//
+//		if (Service_step==500){
+//			Service_step=0;
+//		}
+//		else Service_step++;
+
+
 	}
 	else if (htim ->Instance == TIM3){
 		TimeoutMng();
@@ -348,25 +362,19 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 //	}
 //}
 
-void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *CanHandle)
-{
-
-  if ((RxHeader.StdId == 0x321) && (RxHeader.IDE == CAN_ID_STD) && (RxHeader.DLC == 8))
-  {
-
-  }
-}
-
-
-
-
-
-
-//void ADC_DMAConvCplt(DMA_HandleTypeDef *hdma){
+//void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *CanHandle)
+//{
 //
+//  if ((RxHeader.StdId == 0x321) && (RxHeader.IDE == CAN_ID_STD) && (RxHeader.DLC == 8))
+//  {
 //
-//
+//  }
 //}
+
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc){
+	DATA_Acquisition_from_DMA(p_ADC1_Data);
+
+}
 
 
 
