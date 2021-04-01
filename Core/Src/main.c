@@ -153,7 +153,7 @@ int main(void)
 
 
   BUCK_ADC_Init(&ADC_Conf,G_VAC,B_VAC,G_IAC,B_IAC,G_VDC,B_VDC,G_IDC,B_IDC);
-  CAN_Start_Setup();
+  //CAN_Start_Setup();
   HAL_TIMEx_PWMN_Start_DMA(&BUCK_Tim1, BUCK_Tim1_PWM_CH, &BUCK_PWM_SRC.PWM_A, 1);
 
 //  HAL_TIM_PWM_Start_DMA(&BUCK_Tim4, BUCK_Tim4_PWM_CH, &BUCK_PWM_SRC.PWM_B, 1);
@@ -265,7 +265,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 		//VDC_ADC_IN_PHY.Vdc=10;
 		//VDC_ADC_IN_PHY.Vdc = 0;
 		//if (Tim_Counter==9){
-		if ((float)((float)BUCK_VDC_REF - (float)VDC_ADC_IN_PHY.Vdc) > 50){
+		if (((float)VDC_ADC_IN_PHY.Vdc) < BUCK_VDC_REF_LOW_REF - 20){
 			PID_Result = Buck_Control(&PID_CONF_Burst,BUCK_VDC_REF, VDC_ADC_IN_PHY.Vdc);
 			PID_CONF.resetPI = RESET;
 		}
@@ -281,17 +281,17 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 
 
 
-		if (VDC_ADC_IN_PHY.Vdc>=250){
-			HAL_TIMEx_PWMN_Stop_DMA(&BUCK_Tim1, BUCK_Tim1_PWM_CH);
-//			HAL_TIM_PWM_Stop_DMA(&BUCK_Tim4, BUCK_Tim4_PWM_CH);
-		}
+//		if (VDC_ADC_IN_PHY.Vdc>=BUCK_VDC_OV){
+//			HAL_TIMEx_PWMN_Stop_DMA(&BUCK_Tim1, BUCK_Tim1_PWM_CH);
+////			HAL_TIM_PWM_Stop_DMA(&BUCK_Tim4, BUCK_Tim4_PWM_CH);
+//		}
 //		else if (VDC_ADC_IN_PHY.Vdc <= BUCK_VDC_REF_LOW_REF){
 //			HAL_TIMEx_PWMN_Start_DMA(&BUCK_Tim1, BUCK_Tim1_PWM_CH, &BUCK_PWM_SRC.PWM_A, 1);
 ////			HAL_TIM_PWM_Start_DMA(&BUCK_Tim4, BUCK_Tim4_PWM_CH, &BUCK_PWM_SRC.PWM_B, 1);
 //		}
 
 
-		//PID_Result = 1.0;
+		//PID_Result = 0.02;
 
 		//BUCK_OC_SRC.OC1 = BUCK_PWM_SRC.PWM_A/2;
 //
@@ -303,41 +303,41 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 		TimeoutMng();
 
 
-		TO_State=DPC_TO_Check(1);
-		if (TO_State==TO_OUT_TOOK){
-			TxHeader.StdId = 0x321;
-			TxHeader.ExtId = 0x01;
-			TxHeader.RTR = CAN_RTR_DATA;
-			TxHeader.IDE = CAN_ID_STD;
-			TxHeader.DLC = 8;
-			TxHeader.TransmitGlobalTime = DISABLE;
-			Duty_To_Send = (uint16_t)(PID_Result*100);
-			//TxData[0] = Highest(VDC_ADC_IN_PHY.Vdc);
-			//TxData[1] = Hi(VDC_ADC_IN_PHY.Vdc);
-			TxData[0] = Lo(Duty_To_Send);
-			TxData[1] = Lowest(Duty_To_Send);
-
-			//TxData[0] = Highest(VDC_ADC_IN_PHY.Vdc);
-			//TxData[1] = Hi(VDC_ADC_IN_PHY.Vdc);
-			TxData[2] = Lo(VDC_ADC_IN_PHY.Vdc);
-			TxData[3] = Lowest(VDC_ADC_IN_PHY.Vdc);
-
-
-
-			TxMailbox = 1;
-			if (HAL_CAN_AddTxMessage(&hcan1, &TxHeader, TxData, &TxMailbox) != HAL_OK)
-			{
-				Error_Handler();
-			}
-			DPC_TO_Set(1, 100);
-
-		}
-		else if (TO_State==TO_OUT_OK){
-
-		}
-		else{
-			DPC_TO_Set(1, 500);
-		}
+//		TO_State=DPC_TO_Check(1);
+//		if (TO_State==TO_OUT_TOOK){
+//			TxHeader.StdId = 0x321;
+//			TxHeader.ExtId = 0x01;
+//			TxHeader.RTR = CAN_RTR_DATA;
+//			TxHeader.IDE = CAN_ID_STD;
+//			TxHeader.DLC = 8;
+//			TxHeader.TransmitGlobalTime = DISABLE;
+//			Duty_To_Send = (uint16_t)(PID_Result*100);
+//			//TxData[0] = Highest(VDC_ADC_IN_PHY.Vdc);
+//			//TxData[1] = Hi(VDC_ADC_IN_PHY.Vdc);
+//			TxData[0] = Lo(Duty_To_Send);
+//			TxData[1] = Lowest(Duty_To_Send);
+//
+//			//TxData[0] = Highest(VDC_ADC_IN_PHY.Vdc);
+//			//TxData[1] = Hi(VDC_ADC_IN_PHY.Vdc);
+//			TxData[2] = Lo(VDC_ADC_IN_PHY.Vdc);
+//			TxData[3] = Lowest(VDC_ADC_IN_PHY.Vdc);
+//
+//
+//
+//			TxMailbox = 1;
+//			if (HAL_CAN_AddTxMessage(&hcan1, &TxHeader, TxData, &TxMailbox) != HAL_OK)
+//			{
+//				Error_Handler();
+//			}
+//			DPC_TO_Set(1, 100);
+//
+//		}
+//		else if (TO_State==TO_OUT_OK){
+//
+//		}
+//		else{
+//			DPC_TO_Set(1, 500);
+//		}
 	}
 }
 
@@ -380,7 +380,7 @@ void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
   /* User can add his own implementation to report the HAL error return state */
-  __disable_irq();
+  //__disable_irq();
   HAL_GPIO_WritePin(LED_H2_PORT, LED_H2,1);
   HAL_TIMEx_PWMN_Stop_DMA(&BUCK_Tim1, BUCK_Tim1_PWM_CH);
   while (1)

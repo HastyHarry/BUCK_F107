@@ -296,7 +296,9 @@ void BUCK_PWM_Processing(float PWM_Value, TIM_HandleTypeDef *PWM_Tim, BUCK_PWM_S
 	if (PWM_Value>1) PWM_Value=1;
 	else if (PWM_Value<0) PWM_Value=0;
 
-	Duty=(uint32_t)(PWM_Period * (PWM_Value));
+	if (PWM_Value<0.02) PWM_Value=0;
+
+	Duty=(uint32_t)((float)PWM_Period * PWM_Value);
 	DMA_PWM_SOURCE->PWM_A = Duty;
 	DMA_PWM_SOURCE->PWM_B = Duty;
 }

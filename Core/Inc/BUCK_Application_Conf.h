@@ -37,10 +37,10 @@
 #define BUCK_PID_K_I					10
 #define BUCK_PID_K_D					0.0001
 #define BUCK_PID_W_F					2*PI*BUCK_SW_Frequency/10
-#define BUCK_PID_SAT_UP					1.0
+#define BUCK_PID_SAT_UP					0.9
 #define BUCK_PID_SAT_DOWN				0.0
 
-#define BUCK_PID_SAT_UP_BURST			0.3
+#define BUCK_PID_SAT_UP_BURST			0.1
 #define BUCK_PID_SAT_DOWN_BURST			0.0
 
 #define G_VAC                           4.25//4.708                                     /*!< Gain terms of the AC voltage sensing */
