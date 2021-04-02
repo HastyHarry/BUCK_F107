@@ -172,7 +172,7 @@ float PID_Control(float Ref, float Feed, PID_Control_Struct* Conf_struct){
 
 	Up = Conf_struct->Kp * Err;
 	Ui = (Conf_struct->Ui_previous * 2 * Conf_struct->SW_Freq + (Err + Conf_struct->Err_pr)*Conf_struct->Ki) /(2 * Conf_struct->SW_Freq);
-	Ud = ((Err - Conf_struct->Err_pr)*Conf_struct->Kd * 2 * Conf_struct->SW_Freq * Conf_struct->Omega - Conf_struct->Ud_previous *(Conf_struct->Omega-2*Conf_struct->SW_Freq )) / (Conf_struct->Omega+2*Conf_struct->SW_Freq);
+	Ud = (Err - Conf_struct->Err_pr*Conf_struct->Kd * 2 * Conf_struct->SW_Freq * Conf_struct->Omega - Conf_struct->Ud_previous *(Conf_struct->Omega-2*Conf_struct->SW_Freq )) / (Conf_struct->Omega+2*Conf_struct->SW_Freq);
 
 	Result = Up+Ui+Ud;
 
@@ -223,6 +223,13 @@ void DATA_Acquisition_from_DMA(uint32_t* p_ADC1_Data) {
 
 	//Raw_ADC.Vac_MA = (float)(Value1/(float)(ADC1_MA_PERIOD));
 	Raw_ADC.Vdc_MA = (float)(Value2/(float)(ADC1_MA_PERIOD));
+//	if (Raw_ADC.Vdc_MA - Raw_ADC.Vdc_MA_prev > 100 ){
+//		Raw_ADC.Vdc_MA = Raw_ADC.Vdc_MA_prev + ((Raw_ADC.Vdc_MA - Raw_ADC.Vdc_MA_prev)*ADC_VAL_CHANGE_SPD_K);
+//	}
+//	else if ( Raw_ADC.Vdc_MA_prev - Raw_ADC.Vdc_MA > 100){
+//		Raw_ADC.Vdc_MA = Raw_ADC.Vdc_MA + ((Raw_ADC.Vdc_MA_prev - Raw_ADC.Vdc_MA)*ADC_VAL_CHANGE_SPD_K);
+//	}
+	Raw_ADC.Vdc_MA_prev = Raw_ADC.Vdc_MA;
 	//Raw_ADC.Idc_MA = (float)(Value3/(float)(ADC1_MA_PERIOD));
 }
 

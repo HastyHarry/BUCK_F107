@@ -40,13 +40,16 @@ typedef struct{
   float Vdc_MA;
   float Vac_MA;
   float Idc_MA;
+  float Vdc_MA_prev;
+  float Vac_MA_prev;
+  float Idc_MA_prev;
 }RAW_ADC_Struct;
 
 
 typedef struct{
-  uint32_t Vdc;
-  uint32_t Vac;
-  uint32_t Idc;
+  float Vdc;
+  float Vac;
+  float Idc;
 }Cooked_ADC_Struct;
 
 typedef struct {

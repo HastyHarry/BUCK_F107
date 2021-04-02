@@ -73,7 +73,7 @@ uint32_t              TxMailbox;
 
 TO_RET_STATE TO_State;
 
-uint32_t Service_Data[500];
+float Service_Data[5][500];
 uint32_t Service_step;
 uint32_t Service_step2;
 
@@ -175,6 +175,7 @@ int main(void)
   HAL_TIM_OC_Init(&BUCK_Tim1);
   HAL_TIM_OC_Start(&BUCK_Tim1, TIM_CHANNEL_1);
 
+  Service_step2=105;
 
 
 //  HAL_TIM_OC_Init(&BUCK_Tim4);
@@ -271,7 +272,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 		//DATA_Acquisition_from_DMA(p_ADC1_Data);
 
 		ADC2Phy_VDC_ProcessData(&ADC_Conf,(RAW_ADC_Struct*)Read_Volt_DC(), &VDC_ADC_IN_PHY);
-		//VDC_ADC_IN_PHY.Vdc=10;
+		//VDC_ADC_IN_PHY.Vdc=Service_step2;
 		//VDC_ADC_IN_PHY.Vdc = 0;
 		//if (Tim_Counter==9){
 		if (((float)VDC_ADC_IN_PHY.Vdc) < BUCK_VDC_REF_LOW_REF - 20){
@@ -313,18 +314,27 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 		ADC_Trigger_Init(BUCK_OC_SRC.OC1);
 
 
-//		Service_Data[Service_step] = VDC_ADC_IN_PHY.Vdc;
-//
-//		if (Service_step==500){
-//			Service_step=0;
-//		}
-//		else Service_step++;
+		Service_Data[0][Service_step] = (float)VDC_ADC_IN_PHY.Vdc;
+		Service_Data[1][Service_step] = (float)(PID_Result*100);
+		Service_Data[2][Service_step] = (float)(PID_CONF.Err_pr*100);
+		Service_Data[3][Service_step] = (float)(PID_CONF.Ui_previous*100);
+		Service_Data[4][Service_step] = (float)(PID_CONF.Ud_previous*100);
+
+		if (Service_step==500){
+//			HAL_TIM_PWM_Stop_DMA(&BUCK_Tim4, BUCK_Tim4_PWM_CH);
+			Service_step=0;
+			Service_step2--;
+
+		}
+		else {
+			Service_step++;
+//			HAL_TIMEx_PWMN_Start_DMA(&BUCK_Tim1, BUCK_Tim1_PWM_CH, &BUCK_PWM_SRC.PWM_A, 1);
+		}
 
 
 	}
 	else if (htim ->Instance == TIM3){
 		TimeoutMng();
-
 
 //		TO_State=DPC_TO_Check(1);
 //		if (TO_State==TO_OUT_TOOK){
@@ -335,17 +345,12 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 //			TxHeader.DLC = 8;
 //			TxHeader.TransmitGlobalTime = DISABLE;
 //			Duty_To_Send = (uint16_t)(PID_Result*100);
-//			//TxData[0] = Highest(VDC_ADC_IN_PHY.Vdc);
-//			//TxData[1] = Hi(VDC_ADC_IN_PHY.Vdc);
+//
 //			TxData[0] = Lo(Duty_To_Send);
 //			TxData[1] = Lowest(Duty_To_Send);
 //
-//			//TxData[0] = Highest(VDC_ADC_IN_PHY.Vdc);
-//			//TxData[1] = Hi(VDC_ADC_IN_PHY.Vdc);
 //			TxData[2] = Lo(VDC_ADC_IN_PHY.Vdc);
 //			TxData[3] = Lowest(VDC_ADC_IN_PHY.Vdc);
-//
-//
 //
 //			TxMailbox = 1;
 //			if (HAL_CAN_AddTxMessage(&hcan1, &TxHeader, TxData, &TxMailbox) != HAL_OK)
@@ -359,7 +364,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 //
 //		}
 //		else{
-//			DPC_TO_Set(1, 500);
+//			DPC_TO_Set(1, 100);
 //		}
 	}
 }

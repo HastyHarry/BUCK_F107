@@ -25,6 +25,7 @@
 #define ADC1_CHs						3
 #define ADC1_MA_PERIOD					20
 #define BUCK_ADC1 						hadc1
+#define ADC_VAL_CHANGE_SPD_K			0.5
 
 
 #define BUCK_VDC_REF					100
@@ -33,9 +34,9 @@
 #define BUCK_VDC_REF_LOW_REF			BUCK_VDC_REF-(BUCK_VDC_REF*BUCK_VDC_HIST/100)
 #define BUCK_VDC_REF_HIGH_REF			BUCK_VDC_REF+(BUCK_VDC_REF*BUCK_VDC_HIST/100)
 
-#define BUCK_PID_K_P					0.7
-#define BUCK_PID_K_I					10
-#define BUCK_PID_K_D					0.0001
+#define BUCK_PID_K_P					0.6
+#define BUCK_PID_K_I					0.5
+#define BUCK_PID_K_D					0
 #define BUCK_PID_W_F					2*PI*BUCK_SW_Frequency/10
 #define BUCK_PID_SAT_UP					0.9
 #define BUCK_PID_SAT_DOWN				0.0
