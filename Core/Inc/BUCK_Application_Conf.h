@@ -3,7 +3,7 @@
 #ifndef __BUCK_APPLICATION_CONF_H
 #define __BUCK_APPLICATION_CONF_H
 
-#define PI 				 3.14
+#define PI		 		 3.14
 #define SQRT_2           1.41421                                                        /*!< Square Root of number 2 */ 
 #define SQRT_3           1.73205                                                        /*!< Square Root of number 3 */ 
 
@@ -51,5 +51,18 @@
 #define B_VDC                           0                                               /*!< Bias terms of the DC voltage sensing */
 #define G_IDC                           102.4                                           /*!< Gain terms of the DC current sensing */
 #define B_IDC                           2048                                            /*!< Bias terms of the DC current sensing */
+
+
+///DPC PID
+#define DPC_VCTRL_KP                    4E-4                                            /*!< VCTRL - Proportional gain of the PI regulator related to DC voltage control*/
+#define DPC_VCTRL_KI                    0.3                                             /*!< VCTRL - Integral gain of the PI regulator related to DC voltage control*/
+#define DPC_PFC_VDC                     100                                				/*!< VCTRL - DC Voltage referance value of the PFC [Expresed in Volt]*/
+#define DPC_PFC_Iref_sat                10//22                                          /*!< VCTRL - d-q axis AC Current referance limit of the PFC [Expresed in AMPs]*/
+#define DPC_VCTRL_PI_AWTG               0.02                                            /*!< VCTRL - Anti Wind-up GAIN*/
+#define DPC_VCTRL_PI_sat_up             0.9          									/*!< VCTRL - Higher Current Referance Saturation LIMIT*/
+#define DPC_VCTRL_PI_sat_down           0                                               /*!< VCTRL - Lower Current Referance Saturation LIMIT*/
+#define DPC_VCTRL_PI_SAT_EN             SET                                             /*!< VCTRL - Current Referance Saturation Enable*/
+#define DPC_VCTRL_PI_AW_EN              SET                                             /*!< VCTRL - Anti Wind-up Enable*/
+#define DPC_PI_VDC_TS                   ((float)1/BUCK_SW_Frequency)
 
 #endif //__BUCK_APPLICATION_CONF_H

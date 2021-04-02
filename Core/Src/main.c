@@ -64,6 +64,8 @@
 BUCK_PWM_Source_Struct BUCK_PWM_SRC;
 BUCK_OC_Source_Struct BUCK_OC_SRC;
 
+PI_STRUCT_t pPI_VDC_CTRL;
+
 CAN_Messages_Struct CAN_Messages;
 uint8_t               TxData[8];
 uint8_t               RxData[8];
@@ -149,6 +151,9 @@ int main(void)
   DPC_TO_Init();
   Buck_PID_Init(&PID_CONF, BUCK_PID_K_P,BUCK_PID_K_I,BUCK_PID_K_D, BUCK_SW_Frequency, BUCK_PID_W_F, BUCK_PID_SAT_UP, BUCK_PID_SAT_DOWN);
   Buck_PID_Init(&PID_CONF_Burst, BUCK_PID_K_P,BUCK_PID_K_I,BUCK_PID_K_D, BUCK_SW_Frequency, BUCK_PID_W_F, BUCK_PID_SAT_UP_BURST, BUCK_PID_SAT_DOWN_BURST);
+
+  DPC_PID_Init(&pPI_VDC_CTRL,DPC_VCTRL_KP,DPC_VCTRL_KI,DPC_PI_VDC_TS,DPC_VCTRL_PI_sat_up,DPC_VCTRL_PI_sat_down,DPC_VCTRL_PI_SAT_EN,DPC_VCTRL_PI_AW_EN,DPC_VCTRL_PI_AWTG);
+
   Buck_Tim_PWM_Init(&BUCK_Tim1, BUCK_SW_Frequency);
   Buck_Tim_PWM_Init(&BUCK_Tim4, BUCK_SW_Frequency);
   Buck_Tim_Init(&BUCK_Tim2, BUCK_Math_Frequency);
@@ -271,11 +276,15 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 		//if (Tim_Counter==9){
 		if (((float)VDC_ADC_IN_PHY.Vdc) < BUCK_VDC_REF_LOW_REF - 20){
 			PID_Result = Buck_Control(&PID_CONF_Burst,BUCK_VDC_REF, VDC_ADC_IN_PHY.Vdc);
-			PID_CONF.resetPI = RESET;
+
+			PID_CONF.resetPI = SET;
+			pPI_VDC_CTRL.resetPI = SET;
+
 		}
 		else {
 			PID_Result = Buck_Control(&PID_CONF,BUCK_VDC_REF, VDC_ADC_IN_PHY.Vdc);
-			PID_CONF_Burst.resetPI = RESET;
+			//PID_Result = PID(BUCK_VDC_REF,  VDC_ADC_IN_PHY.Vdc , &pPI_VDC_CTRL);
+			PID_CONF_Burst.resetPI = SET;
 		}
 		//Tim_Counter=0;
 		//}

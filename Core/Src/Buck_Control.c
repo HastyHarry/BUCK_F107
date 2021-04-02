@@ -13,6 +13,8 @@
 
 RAW_ADC_Struct Raw_ADC;
 
+
+
 /* Private typedef -----------------------------------------------------------*/
 /* Private function prototypes -----------------------------------------------*/
 
@@ -159,10 +161,11 @@ float PID_Control(float Ref, float Feed, PID_Control_Struct* Conf_struct){
 //	Ui_prev = Conf_struct->Ui_previous;
 //	Ud_prev = Conf_struct->Ud_previous;
 
-	if (Conf_struct->resetPI == RESET){
+	if (Conf_struct->resetPI == SET){
 		Conf_struct->Ui_previous = 0;
 		Conf_struct->Ud_previous = 0;
 		Conf_struct->Err_pr = 0;
+		Conf_struct->resetPI = RESET;
 	}
 
 	Err = Ref - Feed;
@@ -321,3 +324,79 @@ void ADC_Trigger_Init(uint32_t Pulse_Val){
 	  HAL_TIM_OC_ConfigChannel(&htim1, &sConfigOC, TIM_CHANNEL_1);
 
 }
+
+float PID(float Ref, float Feed , PI_STRUCT_t *pPI)
+{
+pPI->Ref=Ref;
+pPI->Feed=Feed;
+
+  if(pPI->resetPI==SET)
+  {
+    pPI->Integral=0;
+    pPI->resetPI = RESET;
+  }
+  else{
+    pPI->error=(float)Ref-(float)Feed;
+    pPI->Integral=pPI->Integral+(pPI->k1*pPI->error)+pPI->Antiwindup_Term;
+    pPI->Integralout=pPI->Integral;
+    pPI->PIout=(pPI->k0*pPI->error)+pPI->Integralout;
+  }
+
+  //Start Check Saturation
+  if (pPI->satPI_toggle==SET){
+    //Saturation
+    if(    pPI->PIout>pPI->PIsat_up)
+    {
+      pPI->PIout_sat=pPI->PIsat_up;
+    }
+    else if(    pPI->PIout<pPI->PIsat_down)
+    {
+      pPI->PIout_sat=pPI->PIsat_down;
+    }
+    else {
+      pPI->PIout_sat=pPI->PIout;
+    }
+
+    //Start Check Antiwindup
+    if (pPI->antiwindPI_toggle==SET){
+      //Saturation
+      pPI->Antiwindup_Term=(pPI->PIout_sat-pPI->PIout)*pPI->Antiwindup_Gain;
+    }
+    else {
+      pPI->Antiwindup_Term=0;
+    }
+    //End Check Antiwindup
+  }
+  else {
+    pPI->PIout_sat=pPI->PIout;
+    pPI->Antiwindup_Term=0;
+  }
+  //End Check Saturation
+
+  return pPI->PIout_sat;
+}
+
+void DPC_PID_Init(PI_STRUCT_t *pPI,float Init_Val_Kp,float Init_Val_Ki,float Init_Val_Ts,float Init_PIsat_up, float Init_PIsat_down,FlagStatus satPI_toggle_local,FlagStatus antiwindPI_toggle_local,float Antiwindup_Gain_local)
+{
+  pPI->Kp=Init_Val_Kp;
+  pPI->Ki=Init_Val_Ki;
+  pPI->Ts=Init_Val_Ts;
+  pPI->Integral=0;
+  pPI->PIout=0;
+  pPI->PIsat_up=Init_PIsat_up;
+  pPI->PIsat_down=Init_PIsat_down;
+  pPI->error=0;
+  pPI->Integralout=0;
+  pPI->resetPI=RESET;
+  pPI->k0=Init_Val_Kp; //K0=Kp
+  pPI->k1=Init_Val_Ki*Init_Val_Ts; //K1=Ki*Ts
+  pPI->satPI_toggle=satPI_toggle_local;
+  pPI->antiwindPI_toggle=antiwindPI_toggle_local;
+  pPI->Antiwindup_Gain=Antiwindup_Gain_local;
+}
+
+void PID_RESET(PI_STRUCT_t *pPI)
+{
+  pPI->Integral=0;
+}
+
