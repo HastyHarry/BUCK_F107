@@ -66,4 +66,6 @@
 #define DPC_VCTRL_PI_AW_EN              SET                                             /*!< VCTRL - Anti Wind-up Enable*/
 #define DPC_PI_VDC_TS                   ((float)1/BUCK_SW_Frequency)
 
+#define DPC_VCTRL_BURST_PI_sat_up       0.3
+
 #endif //__BUCK_APPLICATION_CONF_H
