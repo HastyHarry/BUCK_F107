@@ -87,6 +87,7 @@ uint32_t p_ADC1_Data[ADC1_MA_PERIOD*ADC1_CHs];                                 /
 
 float Service_data[100];
 uint32_t service_step;
+uint32_t ADC_VALUE;
 
 ADC_Conf_TypeDef ADC_Conf;
 Cooked_ADC_Struct VDC_ADC_IN_PHY;
@@ -170,13 +171,16 @@ int main(void)
 //  HAL_TIM_PWM_Start_DMA(&BUCK_Tim4, BUCK_Tim4_PWM_CH, &BUCK_PWM_SRC.PWM_B, 1);
 
   HAL_ADC_Start_DMA(&BUCK_ADC1, p_ADC1_Data, ADC1_MA_PERIOD*ADC1_CHs);
+  //HAL_ADC_Start_IT(&BUCK_ADC1);
+
 
   HAL_TIM_Base_Start_IT(&htim2);
   HAL_TIM_Base_Start_IT(&htim3);
 
   HAL_TIM_OC_Init(&BUCK_Tim1);
   HAL_TIM_OC_Start(&BUCK_Tim1, TIM_CHANNEL_1);
-
+  //HAL_TIM_OC_Start_IT(&BUCK_Tim1, TIM_CHANNEL_1);
+  //HAL_TIM_OC_Start_DMA(&BUCK_Tim1, BUCK_Tim1_OC_CH, &BUCK_OC_SRC.OC1, 1);
   Service_step2=105;
 
 
@@ -267,6 +271,8 @@ void SystemClock_Config(void)
 
 /* USER CODE BEGIN 4 */
 
+
+
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 	if (htim ->Instance == TIM2){
 		//HAL_GPIO_WritePin(LED_H2_PORT, LED_H2, GPIO_PIN_SET);
@@ -315,6 +321,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 		BUCK_PWM_Processing(PID_Result, &BUCK_Tim1, &BUCK_PWM_SRC);
 		BUCK_OC_SRC.OC1 = (uint32_t)((float)BUCK_PWM_SRC.PWM_A/2);
 		ADC_Trigger_Init(BUCK_OC_SRC.OC1);
+		HAL_TIM_GenerateEvent(&BUCK_Tim1, TIM_EVENTSOURCE_CC1);
 
 
 		Service_Data[0][Service_step] = (float)VDC_ADC_IN_PHY.Vdc;
@@ -370,6 +377,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 //			DPC_TO_Set(1, 100);
 //		}
 	}
+	else if (htim ->Instance == TIM1){
+		HAL_GPIO_TogglePin(LED_H2_PORT, LED_H2);
+	}
 }
 
 //void HAL_CAN_TxCpltCallback(CAN_HandleTypeDef* CanHandle){
@@ -390,7 +400,12 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc){
 	DATA_Acquisition_from_DMA(p_ADC1_Data);
+	//ADC_VALUE = HAL_ADC_GetValue(&BUCK_ADC1);
+	//HAL_ADC_Start_IT(&BUCK_ADC1);
+}
 
+void HAL_TIM_TriggerCallback(TIM_HandleTypeDef *htim){
+	HAL_GPIO_TogglePin(LED_H2_PORT, LED_H2);
 }
 
 

@@ -12,6 +12,7 @@
 #define BUCK_Tim3                       htim3
 #define BUCK_Tim4                       htim4
 #define BUCK_Tim5                       htim5
+#define BUCK_Tim1_OC_CH					TIM_CHANNEL_1
 #define BUCK_Tim4_OC_CH					TIM_CHANNEL_4
 #define BUCK_Tim5_OC_CH					TIM_CHANNEL_1									/*!<Not in USE>*/
 

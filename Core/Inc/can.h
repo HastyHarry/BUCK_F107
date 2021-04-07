@@ -33,8 +33,6 @@ extern "C" {
 
 extern CAN_HandleTypeDef hcan1;
 
-
-
 /* USER CODE BEGIN Private defines */
 CAN_FilterTypeDef  sFilterConfig;
 CAN_TxHeaderTypeDef   TxHeader;

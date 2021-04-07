@@ -30,14 +30,44 @@ DMA_HandleTypeDef hdma_adc1;
 /* ADC1 init function */
 void MX_ADC1_Init(void)
 {
+
+  /* USER CODE BEGIN ADC1_Init 0 */
+	ADC_InjectionConfTypeDef adcInjectedConfig = {0};
+
+
+//	adcInjectedConfig.AutoInjectedConv = DISABLE; // As per note in driver
+//	adcInjectedConfig.ExternalTrigInjecConv = ADC_EXTERNALTRIGINJECCONV_T1_TRGO; // TIM1 compare
+//	//adcInjectedConfig.ExternalTrigInjecConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE; //
+//	adcInjectedConfig.InjectedDiscontinuousConvMode = ENABLE;
+//	adcInjectedConfig.InjectedSamplingTime = ADC_SAMPLETIME_13CYCLES_5;
+//	adcInjectedConfig.InjectedOffset = 0;
+//	// Channel 1
+//	adcInjectedConfig.InjectedChannel = ADC_CHANNEL_1;
+//	adcInjectedConfig.InjectedRank = ADC_INJECTED_RANK_1;
+//	HAL_ADCEx_InjectedConfigChannel(&hadc1, &adcInjectedConfig);
+//	// Channel 2
+//	adcInjectedConfig.InjectedChannel = ADC_CHANNEL_2;
+//	adcInjectedConfig.InjectedRank = ADC_INJECTED_RANK_2;
+//	HAL_ADCEx_InjectedConfigChannel(&hadc1, &adcInjectedConfig);
+//	// Channel 2
+//	adcInjectedConfig.InjectedChannel = ADC_CHANNEL_3;
+//	adcInjectedConfig.InjectedRank = ADC_INJECTED_RANK_3;
+//	HAL_ADCEx_InjectedConfigChannel(&hadc1, &adcInjectedConfig);
+
+  /* USER CODE END ADC1_Init 0 */
+
   ADC_ChannelConfTypeDef sConfig = {0};
 
+  /* USER CODE BEGIN ADC1_Init 1 */
+
+  /* USER CODE END ADC1_Init 1 */
   /** Common config
   */
   hadc1.Instance = ADC1;
   hadc1.Init.ScanConvMode = ADC_SCAN_ENABLE;
-  hadc1.Init.ContinuousConvMode = ENABLE;
-  hadc1.Init.DiscontinuousConvMode = DISABLE;
+  hadc1.Init.ContinuousConvMode = DISABLE;
+  hadc1.Init.DiscontinuousConvMode = ENABLE;
+  hadc1.Init.NbrOfDiscConversion = 3;
   hadc1.Init.ExternalTrigConv = ADC_EXTERNALTRIGCONV_T1_CC1;
   hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
   hadc1.Init.NbrOfConversion = 3;
@@ -49,7 +79,7 @@ void MX_ADC1_Init(void)
   */
   sConfig.Channel = ADC_CHANNEL_1;
   sConfig.Rank = ADC_REGULAR_RANK_1;
-  sConfig.SamplingTime = ADC_SAMPLETIME_1CYCLE_5;
+  sConfig.SamplingTime = ADC_SAMPLETIME_28CYCLES_5;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
   {
     Error_Handler();
@@ -70,6 +100,9 @@ void MX_ADC1_Init(void)
   {
     Error_Handler();
   }
+  /* USER CODE BEGIN ADC1_Init 2 */
+
+  /* USER CODE END ADC1_Init 2 */
 
 }
 
