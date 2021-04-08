@@ -179,10 +179,10 @@ int main(void)
 
   HAL_TIM_Base_Start_IT(&htim1);
   HAL_TIM_Base_Start_IT(&htim2);
-  //HAL_TIM_Base_Start_IT(&htim3);
   HAL_TIM_Base_Start_IT(&htim4);
   HAL_TIM_Base_Start_IT(&htim5);
 
+  HAL_ADC_Start_DMA(&BUCK_ADC1, p_ADC1_Data, ADC1_CHs);
 
 
   /* USER CODE END 2 */
@@ -304,17 +304,17 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 		BUCK_PWM_Processing(PID_Result, &BUCK_Tim1, &BUCK_PWM_SRC);
 		//HAL_TIM_GenerateEvent(&BUCK_Tim1, TIM_EVENTSOURCE_CC1);
 
-		BUCK_OC_SRC.OC1 = (uint32_t)((float)BUCK_PWM_SRC.PWM_A);
-		BUCK_OC_SRC.OC1 = 10000;
-		ADC_Trigger_Init(BUCK_OC_SRC.OC1);
-		HAL_ADC_Start_DMA(&BUCK_ADC1, p_ADC1_Data, ADC1_CHs);
+//		BUCK_OC_SRC.OC1 = (uint32_t)((float)BUCK_PWM_SRC.PWM_A);
+//		BUCK_OC_SRC.OC1 = 10000;
+//		ADC_Trigger_Init(BUCK_OC_SRC.OC1);
+//		HAL_ADC_Start_DMA(&BUCK_ADC1, p_ADC1_Data, ADC1_CHs);
 
 
 		Service_Data[0][Service_step] = (float)VDC_ADC_IN_PHY.Vdc;
-		Service_Data[1][Service_step] = (float)(PID_Result*100);
-		Service_Data[2][Service_step] = (float)(PID_CONF.Err_pr*100);
-		Service_Data[3][Service_step] = (float)(PID_CONF.Ui_previous*100);
-		Service_Data[4][Service_step] = (float)(PID_CONF.Ud_previous*100);
+//		Service_Data[1][Service_step] = (float)(PID_Result*100);
+//		Service_Data[2][Service_step] = (float)(PID_CONF.Err_pr*100);
+//		Service_Data[3][Service_step] = (float)(PID_CONF.Ui_previous*100);
+//		Service_Data[4][Service_step] = (float)(PID_CONF.Ud_previous*100);
 
 		if (Service_step==500){
 //			HAL_TIM_PWM_Stop_DMA(&BUCK_Tim4, BUCK_Tim4_PWM_CH);

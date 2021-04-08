@@ -29,13 +29,13 @@
 #define ADC_VAL_CHANGE_SPD_K			0.5
 
 
-#define BUCK_VDC_REF					100
+#define BUCK_VDC_REF					50
 #define BUCK_VDC_OV						150
 #define BUCK_VDC_HIST					10												/*!< value in %*/
 #define BUCK_VDC_REF_LOW_REF			BUCK_VDC_REF-(BUCK_VDC_REF*BUCK_VDC_HIST/100)
 #define BUCK_VDC_REF_HIGH_REF			BUCK_VDC_REF+(BUCK_VDC_REF*BUCK_VDC_HIST/100)
 
-#define BUCK_PID_K_P					0.6
+#define BUCK_PID_K_P					0.1
 #define BUCK_PID_K_I					0.5
 #define BUCK_PID_K_D					0
 #define BUCK_PID_W_F					2*PI*BUCK_SW_Frequency/10
@@ -49,7 +49,7 @@
 #define B_VAC                           1975                                            /*!< Bias terms of the AC voltage sensing */
 #define G_IAC                           32.5//42.67                                     /*!< Gain terms of the AC current sensing */
 #define B_IAC                           1958                                            /*!< Bias terms of the AC current sensing */
-#define G_VDC                           0.185//8.4//7.726                                     /*!< Gain terms of the DC voltage sensing */
+#define G_VDC                           0.06//8.4//7.726                                     /*!< Gain terms of the DC voltage sensing */
 #define B_VDC                           0                                               /*!< Bias terms of the DC voltage sensing */
 #define G_IDC                           102.4                                           /*!< Gain terms of the DC current sensing */
 #define B_IDC                           2048                                            /*!< Bias terms of the DC current sensing */
@@ -58,7 +58,7 @@
 ///DPC PID
 #define DPC_VCTRL_KP                    4E-4                                            /*!< VCTRL - Proportional gain of the PI regulator related to DC voltage control*/
 #define DPC_VCTRL_KI                    0.3                                             /*!< VCTRL - Integral gain of the PI regulator related to DC voltage control*/
-#define DPC_PFC_VDC                     100                                				/*!< VCTRL - DC Voltage referance value of the PFC [Expresed in Volt]*/
+#define DPC_PFC_VDC                     50                                				/*!< VCTRL - DC Voltage referance value of the PFC [Expresed in Volt]*/
 #define DPC_PFC_Iref_sat                10//22                                          /*!< VCTRL - d-q axis AC Current referance limit of the PFC [Expresed in AMPs]*/
 #define DPC_VCTRL_PI_AWTG               0.02                                            /*!< VCTRL - Anti Wind-up GAIN*/
 #define DPC_VCTRL_PI_sat_up             0.9          									/*!< VCTRL - Higher Current Referance Saturation LIMIT*/
