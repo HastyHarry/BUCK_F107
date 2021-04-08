@@ -199,38 +199,52 @@ float PID_Control(float Ref, float Feed, PID_Control_Struct* Conf_struct){
   */
 
 void DATA_Acquisition_from_DMA(uint32_t* p_ADC1_Data) {
-	uint16_t i;
+
 //	uint16_t MA_Period;
-	float Value1;
-	float Value2;
-	float Value3;
+
 
 //	MA_Period=10;
 //
-//	Raw_ADC.Vdc[Raw_ADC.MA_Counter] = p_ADC1_Data[1];
-//	Raw_ADC.Idc[Raw_ADC.MA_Counter] = p_ADC1_Data[2];
-//	Raw_ADC.Vac[Raw_ADC.MA_Counter] = p_ADC1_Data[0];
-//	Raw_ADC.MA_Counter++;
-//	if (Raw_ADC.MA_Counter>=MA_Period){
-//		Raw_ADC.MA_Counter=0;
-//	}
-	Value2 = 0;
-	for (i=0;i<ADC1_MA_PERIOD;i++){
-		//Value1 = Value1 + p_ADC1_Data[i*ADC1_CHs];
-		Value2 = Value2 + p_ADC1_Data[i*ADC1_CHs+1];
-		//Value3 = Value3 + p_ADC1_Data[i*ADC1_CHs+2];
+	Raw_ADC.Vdc[Raw_ADC.MA_Counter] = p_ADC1_Data[1];
+	Raw_ADC.Idc[Raw_ADC.MA_Counter] = p_ADC1_Data[2];
+	Raw_ADC.Vac[Raw_ADC.MA_Counter] = p_ADC1_Data[0];
+	Raw_ADC.MA_Counter++;
+	if (Raw_ADC.MA_Counter>=ADC1_MA_PERIOD){
+		Raw_ADC.MA_Counter=0;
 	}
+//	Value2 = 0;
+//	for (i=0;i<ADC1_MA_PERIOD;i++){
+//		//Value1 = Value1 + p_ADC1_Data[i*ADC1_CHs];
+//		Value2 = Value2 + p_ADC1_Data[i*ADC1_CHs+1];
+//		//Value3 = Value3 + p_ADC1_Data[i*ADC1_CHs+2];
+//	}
 
 	//Raw_ADC.Vac_MA = (float)(Value1/(float)(ADC1_MA_PERIOD));
-	Raw_ADC.Vdc_MA = (float)(Value2/(float)(ADC1_MA_PERIOD));
+	//Raw_ADC.Vdc_MA = (float)(Value2/(float)(ADC1_MA_PERIOD));
 //	if (Raw_ADC.Vdc_MA - Raw_ADC.Vdc_MA_prev > 100 ){
 //		Raw_ADC.Vdc_MA = Raw_ADC.Vdc_MA_prev + ((Raw_ADC.Vdc_MA - Raw_ADC.Vdc_MA_prev)*ADC_VAL_CHANGE_SPD_K);
 //	}
 //	else if ( Raw_ADC.Vdc_MA_prev - Raw_ADC.Vdc_MA > 100){
 //		Raw_ADC.Vdc_MA = Raw_ADC.Vdc_MA + ((Raw_ADC.Vdc_MA_prev - Raw_ADC.Vdc_MA)*ADC_VAL_CHANGE_SPD_K);
 //	}
-	Raw_ADC.Vdc_MA_prev = Raw_ADC.Vdc_MA;
+	//Raw_ADC.Vdc_MA_prev = Raw_ADC.Vdc_MA;
 	//Raw_ADC.Idc_MA = (float)(Value3/(float)(ADC1_MA_PERIOD));
+}
+
+void ADC_MA_VAL_Collection(){
+	uint16_t i;
+	float Value1 =0;
+	float Value2 =0;
+	float Value3 =0;
+
+	for (i=0;i<ADC1_MA_PERIOD;i++){
+		//Value1 = Value1 + Raw_ADC.Vac[i*ADC1_CHs];
+		Value2 = Value2 + Raw_ADC.Vdc[i];
+		//Value3 = Value3 + Raw_ADC.Idc[i*ADC1_CHs+2];
+	}
+	Raw_ADC.Vac_MA = (float)(Value1/(float)(ADC1_MA_PERIOD));
+	Raw_ADC.Vdc_MA = (float)(Value2/(float)(ADC1_MA_PERIOD));
+	Raw_ADC.Idc_MA = (float)(Value3/(float)(ADC1_MA_PERIOD));
 }
 
 
@@ -315,7 +329,7 @@ void BUCK_PWM_Processing(float PWM_Value, TIM_HandleTypeDef *PWM_Tim, BUCK_PWM_S
 
 void ADC_Trigger_Init(uint32_t Pulse_Val){
 
-	TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+	  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
 	  TIM_MasterConfigTypeDef sMasterConfig = {0};
 	  TIM_OC_InitTypeDef sConfigOC = {0};
 	  TIM_BreakDeadTimeConfigTypeDef sBreakDeadTimeConfig = {0};

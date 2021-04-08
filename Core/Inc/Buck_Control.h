@@ -12,6 +12,7 @@
 //#include "stdint.h"
 //#include "stdio.h"
 #include "stm32f1xx_hal.h"
+#include "BUCK_Application_Conf.h"
 
 /* Exported types ------------------------------------------------------------*/
 typedef struct {
@@ -33,9 +34,9 @@ FlagStatus resetComplete;
 }PID_Control_Struct;
 
 typedef struct{
-  uint32_t Vdc[20];
-  uint32_t Vac[20];
-  uint32_t Idc[20];
+  uint32_t Vdc[ADC1_MA_PERIOD];
+  uint32_t Vac[ADC1_MA_PERIOD];
+  uint32_t Idc[ADC1_MA_PERIOD];
   uint32_t MA_Counter;
   float Vdc_MA;
   float Vac_MA;
@@ -106,6 +107,7 @@ float PID_Control(float Ref, float Feed, PID_Control_Struct* Conf_struct);
 void Buck_Tim_Init(TIM_HandleTypeDef* BuckTIM, uint32_t  Freq_Desidered);
 void Buck_Tim_PWM_Init(TIM_HandleTypeDef* BuckTIM, uint32_t  Freq_Desidered);
 void DATA_Acquisition_from_DMA(uint32_t* p_ADC1_Data);
+void ADC_MA_VAL_Collection();
 void ADC2Phy_VDC_ProcessData(ADC_Conf_TypeDef *ADC_Conf, RAW_ADC_Struct* p_Data_Sub, Cooked_ADC_Struct* Cooked_Values);
 RAW_ADC_Struct* Read_Volt_DC(void);
 void BUCK_ADC_Init(ADC_Conf_TypeDef *BUCK_ADC_Conf,float G_Vac,float B_Vac,float G_Iac,float B_Iac,float G_Vdc,float B_Vdc,float G_Idc,float B_Idc);
