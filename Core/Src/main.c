@@ -96,6 +96,7 @@ ADC_Conf_TypeDef ADC_Conf;
 Cooked_ADC_Struct VDC_ADC_IN_PHY;
 PID_Control_Struct PID_CONF;
 PID_Control_Struct PID_CONF_Burst;
+PID_Control_Struct PID_CONF_StartUp;
 
 /* USER CODE END PV */
 
@@ -147,13 +148,16 @@ int main(void)
   MX_USART3_UART_Init();
   MX_TIM5_Init();
   /* USER CODE BEGIN 2 */
+
+  HAL_ADCEx_Calibration_Start(&hadc1);
+  HAL_Delay(500);
 //  HAL_TIM_MspPostInit(&htim1);
 //  HAL_TIM_MspPostInit(&htim2);
 //  HAL_TIM_MspPostInit(&htim4);
 
   DPC_TO_Init();
-  Buck_PID_Init(&PID_CONF, BUCK_PID_K_P,BUCK_PID_K_I,BUCK_PID_K_D, BUCK_SW_Frequency, BUCK_PID_W_F, BUCK_PID_SAT_UP, BUCK_PID_SAT_DOWN);
-  Buck_PID_Init(&PID_CONF_Burst, BUCK_PID_K_P,BUCK_PID_K_I,BUCK_PID_K_D, BUCK_SW_Frequency, BUCK_PID_W_F, BUCK_PID_SAT_UP_BURST, BUCK_PID_SAT_DOWN_BURST);
+  Buck_PID_Init(&PID_CONF, BUCK_PID_K_P,BUCK_PID_K_I,BUCK_PID_K_D, BUCK_Math_Frequency, BUCK_PID_W_F, BUCK_PID_SAT_UP, BUCK_PID_SAT_DOWN, BUCK_PID_HIST, BUCK_PID_BASE_VAL);
+  Buck_PID_Init(&PID_CONF_StartUp, BUCK_PID_K_P,BUCK_PID_K_I,BUCK_PID_K_D, BUCK_Math_Frequency, BUCK_PID_W_F, BUCK_PID_SAT_UP_BURST, BUCK_PID_SAT_DOWN_BURST, BUCK_PID_HIST, BUCK_PID_BASE_VAL);
 
   DPC_PID_Init(&pPI_VDC_CTRL,DPC_VCTRL_KP,DPC_VCTRL_KI,DPC_PI_VDC_TS,DPC_VCTRL_PI_sat_up,DPC_VCTRL_PI_sat_down,DPC_VCTRL_PI_SAT_EN,DPC_VCTRL_PI_AW_EN,DPC_VCTRL_PI_AWTG);
   DPC_PID_Init(&pPI_VDC_CTRL_BURST,DPC_VCTRL_KP,DPC_VCTRL_KI,DPC_PI_VDC_TS,DPC_VCTRL_BURST_PI_sat_up,DPC_VCTRL_PI_sat_down,DPC_VCTRL_PI_SAT_EN,DPC_VCTRL_PI_AW_EN,DPC_VCTRL_PI_AWTG);
@@ -175,14 +179,15 @@ int main(void)
 
   //HAL_ADC_Start_IT(&BUCK_ADC1);
 
-  HAL_ADC_Start_DMA(&BUCK_ADC1, p_ADC1_Data, ADC1_CHs);
+  HAL_ADC_Start_DMA(&BUCK_ADC1, p_ADC1_Data, ADC1_MA_PERIOD_RAW*ADC1_CHs);
 
   HAL_TIM_Base_Start_IT(&htim1);
-  HAL_TIM_Base_Start_IT(&htim2);
-  HAL_TIM_Base_Start_IT(&htim4);
+
   HAL_TIM_Base_Start_IT(&htim5);
 
-  HAL_ADC_Start_DMA(&BUCK_ADC1, p_ADC1_Data, ADC1_CHs);
+  HAL_ADC_Start_DMA(&BUCK_ADC1, p_ADC1_Data, ADC1_MA_PERIOD_RAW*ADC1_CHs);
+  HAL_TIM_Base_Start_IT(&htim2);
+  HAL_TIM_Base_Start_IT(&htim4);
 
 
   /* USER CODE END 2 */
@@ -195,6 +200,7 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 	  //HAL_ADC_Start_DMA(&BUCK_ADC1, p_ADC1_Data, ADC1_CHs);
+
 
 
 
@@ -271,36 +277,37 @@ void SystemClock_Config(void)
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 	if (htim ->Instance == TIM2){
+
 		ADC_MA_VAL_Collection();
 		ADC2Phy_VDC_ProcessData(&ADC_Conf,(RAW_ADC_Struct*)Read_Volt_DC(), &VDC_ADC_IN_PHY);
 		//VDC_ADC_IN_PHY.Vdc=Service_step2;
 		//VDC_ADC_IN_PHY.Vdc = 0;
-		if (((float)VDC_ADC_IN_PHY.Vdc) < BUCK_VDC_REF_LOW_REF - 20){
-			//PID_Result = Buck_Control(&PID_CONF_Burst,BUCK_VDC_REF, VDC_ADC_IN_PHY.Vdc);
-			PID_Result = PID(BUCK_VDC_REF,  VDC_ADC_IN_PHY.Vdc , &pPI_VDC_CTRL_BURST);
+		if (((float)VDC_ADC_IN_PHY.Vdc) < BUCK_VDC_REF_LOW_REF - 30){
+			PID_Result = Buck_Control(&PID_CONF_StartUp,BUCK_VDC_REF, VDC_ADC_IN_PHY.Vdc);
+			//PID_Result = PID(BUCK_VDC_REF,  VDC_ADC_IN_PHY.Vdc , &pPI_VDC_CTRL_BURST);
 			PID_CONF.resetPI = SET;
 			pPI_VDC_CTRL.resetPI = SET;
 
 		}
 		else {
-			//PID_Result = Buck_Control(&PID_CONF,BUCK_VDC_REF, VDC_ADC_IN_PHY.Vdc);
-			PID_Result = PID(BUCK_VDC_REF,  VDC_ADC_IN_PHY.Vdc , &pPI_VDC_CTRL);
+			PID_Result = Buck_Control(&PID_CONF,BUCK_VDC_REF, VDC_ADC_IN_PHY.Vdc);
+			//PID_Result = PID(BUCK_VDC_REF,  VDC_ADC_IN_PHY.Vdc , &pPI_VDC_CTRL);
 			pPI_VDC_CTRL_BURST.resetPI = SET;
 			PID_CONF_Burst.resetPI = SET;
 		}
 
 
 
-//		if (VDC_ADC_IN_PHY.Vdc>=BUCK_VDC_OV){
-//			HAL_TIMEx_PWMN_Stop_DMA(&BUCK_Tim1, BUCK_Tim1_PWM_CH);
-////			HAL_TIM_PWM_Stop_DMA(&BUCK_Tim4, BUCK_Tim4_PWM_CH);
-//		}
-//		else if (VDC_ADC_IN_PHY.Vdc <= BUCK_VDC_REF_LOW_REF){
-//			HAL_TIMEx_PWMN_Start_DMA(&BUCK_Tim1, BUCK_Tim1_PWM_CH, &BUCK_PWM_SRC.PWM_A, 1);
-////			HAL_TIM_PWM_Start_DMA(&BUCK_Tim4, BUCK_Tim4_PWM_CH, &BUCK_PWM_SRC.PWM_B, 1);
-//		}
+		if (VDC_ADC_IN_PHY.Vdc>=BUCK_VDC_OV){
+			HAL_TIMEx_PWMN_Stop_DMA(&BUCK_Tim1, BUCK_Tim1_PWM_CH);
+//			HAL_TIM_PWM_Stop_DMA(&BUCK_Tim4, BUCK_Tim4_PWM_CH);
+		}
+		else if (VDC_ADC_IN_PHY.Vdc <= BUCK_VDC_REF_LOW_REF){
+			HAL_TIMEx_PWMN_Start_DMA(&BUCK_Tim1, BUCK_Tim1_PWM_CH, &BUCK_PWM_SRC.PWM_A, 1);
+//			HAL_TIM_PWM_Start_DMA(&BUCK_Tim4, BUCK_Tim4_PWM_CH, &BUCK_PWM_SRC.PWM_B, 1);
+		}
 
-
+		//PID_Result = 0.9;
 		BUCK_PWM_Processing(PID_Result, &BUCK_Tim1, &BUCK_PWM_SRC);
 		//HAL_TIM_GenerateEvent(&BUCK_Tim1, TIM_EVENTSOURCE_CC1);
 
@@ -311,6 +318,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 
 
 		Service_Data[0][Service_step] = (float)VDC_ADC_IN_PHY.Vdc;
+		Service_Data[1][Service_step] = (float)VDC_ADC_IN_PHY.Idc;
 //		Service_Data[1][Service_step] = (float)(PID_Result*100);
 //		Service_Data[2][Service_step] = (float)(PID_CONF.Err_pr*100);
 //		Service_Data[3][Service_step] = (float)(PID_CONF.Ui_previous*100);
@@ -382,8 +390,11 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 //}
 
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc){
+	//HAL_ADC_Stop_DMA(&BUCK_ADC1);
 	DATA_Acquisition_from_DMA(p_ADC1_Data);
+	DATA_Processing();
 	HAL_GPIO_TogglePin(LED_VD3_PORT, LED_VD3);
+	//HAL_ADC_Start_DMA(&BUCK_ADC1, p_ADC1_Data, ADC1_MA_PERIOD_RAW*ADC1_CHs);
 	//HAL_ADC_Stop_DMA(&BUCK_ADC1);
 }
 

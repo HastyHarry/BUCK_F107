@@ -12,6 +12,7 @@
 /* Private variables ---------------------------------------------------------*/
 
 RAW_ADC_Struct Raw_ADC;
+RAW_ADC_Struct Raw_DMA;
 
 
 
@@ -69,7 +70,7 @@ void Buck_Tim_PWM_Init(TIM_HandleTypeDef* BuckTIM, uint32_t  Freq_Desidered){
 
 	Timers_ClockPSCed=(Timers_Clock/(Timers_PSC+1));                                      ///
 
-	BuckTIM->Init.Prescaler = 0;
+	BuckTIM->Init.Prescaler = Timers_PSC;
 	BuckTIM->Init.CounterMode = TIM_COUNTERMODE_UP;
 	BuckTIM->Init.Period = ((Timers_ClockPSCed/Freq_Desidered) - 1);
 	BuckTIM->Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
@@ -108,7 +109,7 @@ void Buck_Tim_PWM_Init(TIM_HandleTypeDef* BuckTIM, uint32_t  Freq_Desidered){
 
   * @retval Res PID Output
   */
-void Buck_PID_Init(PID_Control_Struct* PID_CONFIG, float Kp, float Ki, float Kd, float Freq, float Omega, float Sat_Up, float Sat_Down ){
+void Buck_PID_Init(PID_Control_Struct* PID_CONFIG, float Kp, float Ki, float Kd, float Freq, float Omega, float Sat_Up, float Sat_Down, float Hist ,float Base ){
 
 
 	PID_CONFIG->SW_Freq = Freq;
@@ -118,7 +119,10 @@ void Buck_PID_Init(PID_Control_Struct* PID_CONFIG, float Kp, float Ki, float Kd,
 	PID_CONFIG->Kd = Kd;
 	PID_CONFIG->Sat_Up = Sat_Up;
 	PID_CONFIG->Sat_Down = Sat_Down;
+	PID_CONFIG->Hist = Hist;
+	PID_CONFIG->Base_Value = Base;
 	PID_CONFIG->Init_Complete = SET;
+
 
 }
 
@@ -170,11 +174,21 @@ float PID_Control(float Ref, float Feed, PID_Control_Struct* Conf_struct){
 
 	Err = Ref - Feed;
 
-	Up = Conf_struct->Kp * Err;
-	Ui = (Conf_struct->Ui_previous * 2 * Conf_struct->SW_Freq + (Err + Conf_struct->Err_pr)*Conf_struct->Ki) /(2 * Conf_struct->SW_Freq);
-	Ud = (Err - Conf_struct->Err_pr*Conf_struct->Kd * 2 * Conf_struct->SW_Freq * Conf_struct->Omega - Conf_struct->Ud_previous *(Conf_struct->Omega-2*Conf_struct->SW_Freq )) / (Conf_struct->Omega+2*Conf_struct->SW_Freq);
+	if (Err < (Ref*Conf_struct->Hist)/100 && Err>0){
+		Err = 0;
+	}
+	else if (Err > (Ref*Conf_struct->Hist)/100 && Err<0){
+		Err = 0;
+	}
 
+	Up = Conf_struct->Kp * Err;
+	//Ui = (Conf_struct->Ui_previous * 2 * Conf_struct->SW_Freq + Err*Conf_struct->Ki) /(2 * Conf_struct->SW_Freq);
+	//Ud = ((Err - Conf_struct->Err_pr)*Conf_struct->Kd * 2 * Conf_struct->SW_Freq * Conf_struct->Omega - Conf_struct->Ud_previous *(Conf_struct->Omega-2*Conf_struct->SW_Freq )) / (Conf_struct->Omega+2*Conf_struct->SW_Freq);
+	Ui = (Conf_struct->Ui_previous + Err)*Conf_struct->Ki;
+	Ud =(Err - Conf_struct->Err_pr)*Conf_struct->Kd;
 	Result = Up+Ui+Ud;
+
+	//Result = Conf_struct->Base_Value + Result;
 
 	if (Result>=Conf_struct->Sat_Up){
 		Result = Conf_struct->Sat_Up;
@@ -186,6 +200,8 @@ float PID_Control(float Ref, float Feed, PID_Control_Struct* Conf_struct){
 	Conf_struct->Err_pr = Err;
 	Conf_struct->Ui_previous = Ui;
 	Conf_struct->Ud_previous = Ud;
+
+
 
 	return Result;
 
@@ -201,24 +217,37 @@ float PID_Control(float Ref, float Feed, PID_Control_Struct* Conf_struct){
 void DATA_Acquisition_from_DMA(uint32_t* p_ADC1_Data) {
 
 //	uint16_t MA_Period;
-
+	uint16_t i;
+	float Value1 =0;
+	float Value2 =0;
+	float Value3 =0;
 
 //	MA_Period=10;
 //
-	Raw_ADC.Vdc[Raw_ADC.MA_Counter] = p_ADC1_Data[1];
-	Raw_ADC.Idc[Raw_ADC.MA_Counter] = p_ADC1_Data[2];
-	Raw_ADC.Vac[Raw_ADC.MA_Counter] = p_ADC1_Data[0];
-	Raw_ADC.MA_Counter++;
-	if (Raw_ADC.MA_Counter>=ADC1_MA_PERIOD){
-		Raw_ADC.MA_Counter=0;
-	}
-//	Value2 = 0;
-//	for (i=0;i<ADC1_MA_PERIOD;i++){
+
+	Value2 = 0;
+//	for (i=0;i<ADC1_MA_PERIOD_RAW;i++){
 //		//Value1 = Value1 + p_ADC1_Data[i*ADC1_CHs];
 //		Value2 = Value2 + p_ADC1_Data[i*ADC1_CHs+1];
-//		//Value3 = Value3 + p_ADC1_Data[i*ADC1_CHs+2];
+//		Value3 = Value3 + p_ADC1_Data[i*ADC1_CHs+2];
+//	}
+//
+//
+//	Raw_ADC.Vdc[Raw_ADC.MA_Counter] = Value2/ADC1_MA_PERIOD_RAW;
+//	Raw_ADC.Idc[Raw_ADC.MA_Counter] = Value3/ADC1_MA_PERIOD_RAW;
+////	Raw_ADC.Vac[Raw_ADC.MA_Counter] = Value1/ADC1_MA_PERIOD_RAW;
+//
+//	Raw_ADC.MA_Counter++;
+//	if (Raw_ADC.MA_Counter>=ADC1_MA_PERIOD){
+//		Raw_ADC.MA_Counter=0;
 //	}
 
+	for (i=0;i<ADC1_MA_PERIOD_RAW;i++){
+		//Value1 = Value1 + p_ADC1_Data[i*ADC1_CHs];
+		Raw_DMA.Vdc[i] = p_ADC1_Data[i*ADC1_CHs+1];
+		Raw_DMA.Idc[i] = p_ADC1_Data[i*ADC1_CHs+2];
+	}
+	Raw_DMA.Ready = SET;
 	//Raw_ADC.Vac_MA = (float)(Value1/(float)(ADC1_MA_PERIOD));
 	//Raw_ADC.Vdc_MA = (float)(Value2/(float)(ADC1_MA_PERIOD));
 //	if (Raw_ADC.Vdc_MA - Raw_ADC.Vdc_MA_prev > 100 ){
@@ -231,6 +260,36 @@ void DATA_Acquisition_from_DMA(uint32_t* p_ADC1_Data) {
 	//Raw_ADC.Idc_MA = (float)(Value3/(float)(ADC1_MA_PERIOD));
 }
 
+void DATA_Processing(){
+	uint16_t i;
+	float Value1 =0;
+	float Value2 =0;
+	float Value3 =0;
+
+//	MA_Period=10;
+//
+	if (Raw_DMA.Ready==SET){
+		Value2 = 0;
+		for (i=0;i<ADC1_MA_PERIOD_RAW;i++){
+			//Value1 = Value1 + p_ADC1_Data[i*ADC1_CHs];
+			Value2 = Value2 + Raw_DMA.Vdc[i];
+			//Value3 = Value3 + Raw_DMA.Idc[i];
+		}
+
+
+		Raw_ADC.Vdc[Raw_ADC.MA_Counter] = Value2/ADC1_MA_PERIOD_RAW;
+		//Raw_ADC.Idc[Raw_ADC.MA_Counter] = Value3/ADC1_MA_PERIOD_RAW;
+
+		Raw_ADC.MA_Counter++;
+		if (Raw_ADC.MA_Counter>=ADC1_MA_PERIOD){
+			Raw_ADC.MA_Counter=0;
+		}
+
+		Raw_DMA.Ready = RESET;
+	}
+//	Raw_ADC.Vac[Raw_ADC.MA_Counter] = Value1/ADC1_MA_PERIOD_RAW;
+}
+
 void ADC_MA_VAL_Collection(){
 	uint16_t i;
 	float Value1 =0;
@@ -238,13 +297,13 @@ void ADC_MA_VAL_Collection(){
 	float Value3 =0;
 
 	for (i=0;i<ADC1_MA_PERIOD;i++){
-		//Value1 = Value1 + Raw_ADC.Vac[i*ADC1_CHs];
+		//Value1 = Value1 + Raw_ADC.Vac[i];
 		Value2 = Value2 + Raw_ADC.Vdc[i];
-		//Value3 = Value3 + Raw_ADC.Idc[i*ADC1_CHs+2];
+		//Value3 = Value3 + Raw_ADC.Idc[i];
 	}
-	Raw_ADC.Vac_MA = (float)(Value1/(float)(ADC1_MA_PERIOD));
+	//Raw_ADC.Vac_MA = (float)(Value1/(float)(ADC1_MA_PERIOD));
 	Raw_ADC.Vdc_MA = (float)(Value2/(float)(ADC1_MA_PERIOD));
-	Raw_ADC.Idc_MA = (float)(Value3/(float)(ADC1_MA_PERIOD));
+	//Raw_ADC.Idc_MA = (float)(Value3/(float)(ADC1_MA_PERIOD));
 }
 
 
@@ -320,7 +379,7 @@ void BUCK_PWM_Processing(float PWM_Value, TIM_HandleTypeDef *PWM_Tim, BUCK_PWM_S
 	if (PWM_Value>1) PWM_Value=1;
 	else if (PWM_Value<0) PWM_Value=0;
 
-	if (PWM_Value<0.02) PWM_Value=0;
+	if (PWM_Value<0.05) PWM_Value=0;
 
 	Duty=(uint32_t)((float)PWM_Period * PWM_Value);
 	DMA_PWM_SOURCE->PWM_A = Duty;

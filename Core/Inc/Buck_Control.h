@@ -28,6 +28,8 @@ float Ui_previous;
 float Ud_previous;
 float Sat_Up;
 float Sat_Down;
+float Hist;
+float Base_Value;
 FlagStatus Init_Complete;
 FlagStatus resetPI;
 FlagStatus resetComplete;
@@ -44,6 +46,8 @@ typedef struct{
   float Vdc_MA_prev;
   float Vac_MA_prev;
   float Idc_MA_prev;
+
+  FlagStatus Ready;
 }RAW_ADC_Struct;
 
 
@@ -101,7 +105,7 @@ typedef struct {
 }PI_STRUCT_t;
 
 
-void Buck_PID_Init(PID_Control_Struct* PID_CONFIG, float Kp, float Ki, float Kd, float Freq, float Omega, float Sat_Up, float Sat_Down );
+void Buck_PID_Init(PID_Control_Struct* PID_CONFIG, float Kp, float Ki, float Kd, float Freq, float Omega, float Sat_Up, float Sat_Down, float Hist ,float Base );
 float Buck_Control(PID_Control_Struct* PID_CONFIG, float Ref, float Feed);
 float PID_Control(float Ref, float Feed, PID_Control_Struct* Conf_struct);
 void Buck_Tim_Init(TIM_HandleTypeDef* BuckTIM, uint32_t  Freq_Desidered);
@@ -113,7 +117,7 @@ RAW_ADC_Struct* Read_Volt_DC(void);
 void BUCK_ADC_Init(ADC_Conf_TypeDef *BUCK_ADC_Conf,float G_Vac,float B_Vac,float G_Iac,float B_Iac,float G_Vdc,float B_Vdc,float G_Idc,float B_Idc);
 void BUCK_PWM_Processing(float PWM_Value, TIM_HandleTypeDef *PWM_Tim, BUCK_PWM_Source_Struct* DMA_PWM_SOURCE);
 void ADC_Trigger_Init();
-
+void DATA_Processing();
 void DPC_PID_Init(PI_STRUCT_t *pPI,float Init_Val_Kp,float Init_Val_Ki,float Init_Val_Ts,float Init_PIsat_up, float Init_PIsat_down,FlagStatus satPI_toggle_local,FlagStatus antiwindPI_toggle_local,float Antiwindup_Gain_local);
 float PID(float Ref, float Feed , PI_STRUCT_t *pPI);
 void PID_RESET(PI_STRUCT_t *pPI);
