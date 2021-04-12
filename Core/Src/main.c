@@ -77,6 +77,8 @@ uint32_t              TxMailbox;
 
 TO_RET_STATE TO_State;
 
+volatile FlagStatus Calc_Start;
+
 float Service_Data[5][500];
 uint32_t Service_step;
 uint32_t Service_step2;
@@ -199,6 +201,66 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	  if(Calc_Start==SET){
+		  DATA_Processing();
+		  ADC_MA_VAL_Collection();
+			ADC2Phy_VDC_ProcessData(&ADC_Conf,(RAW_ADC_Struct*)Read_Volt_DC(), &VDC_ADC_IN_PHY);
+			//VDC_ADC_IN_PHY.Vdc=Service_step2;
+			//VDC_ADC_IN_PHY.Vdc = 0;
+			if (((float)VDC_ADC_IN_PHY.Vdc) < BUCK_VDC_REF_LOW_REF - 30){
+				PID_Result = Buck_Control(&PID_CONF_StartUp,BUCK_VDC_REF, VDC_ADC_IN_PHY.Vdc);
+				//PID_Result = PID(BUCK_VDC_REF,  VDC_ADC_IN_PHY.Vdc , &pPI_VDC_CTRL_BURST);
+				PID_CONF.resetPI = SET;
+				pPI_VDC_CTRL.resetPI = SET;
+
+			}
+			else {
+				PID_Result = Buck_Control(&PID_CONF,BUCK_VDC_REF, VDC_ADC_IN_PHY.Vdc);
+				//PID_Result = PID(BUCK_VDC_REF,  VDC_ADC_IN_PHY.Vdc , &pPI_VDC_CTRL);
+				pPI_VDC_CTRL_BURST.resetPI = SET;
+				PID_CONF_Burst.resetPI = SET;
+			}
+
+
+
+			if (VDC_ADC_IN_PHY.Vdc>=BUCK_VDC_OV){
+				HAL_TIMEx_PWMN_Stop_DMA(&BUCK_Tim1, BUCK_Tim1_PWM_CH);
+	  //			HAL_TIM_PWM_Stop_DMA(&BUCK_Tim4, BUCK_Tim4_PWM_CH);
+			}
+			else if (VDC_ADC_IN_PHY.Vdc <= BUCK_VDC_REF_LOW_REF){
+				HAL_TIMEx_PWMN_Start_DMA(&BUCK_Tim1, BUCK_Tim1_PWM_CH, &BUCK_PWM_SRC.PWM_A, 1);
+	  //			HAL_TIM_PWM_Start_DMA(&BUCK_Tim4, BUCK_Tim4_PWM_CH, &BUCK_PWM_SRC.PWM_B, 1);
+			}
+
+			//PID_Result = 0.9;
+			BUCK_PWM_Processing(PID_Result, &BUCK_Tim1, &BUCK_PWM_SRC);
+			//HAL_TIM_GenerateEvent(&BUCK_Tim1, TIM_EVENTSOURCE_CC1);
+
+	  //		BUCK_OC_SRC.OC1 = (uint32_t)((float)BUCK_PWM_SRC.PWM_A);
+	  //		BUCK_OC_SRC.OC1 = 10000;
+	  //		ADC_Trigger_Init(BUCK_OC_SRC.OC1);
+	  //		HAL_ADC_Start_DMA(&BUCK_ADC1, p_ADC1_Data, ADC1_CHs);
+
+
+			Service_Data[0][Service_step] = (float)VDC_ADC_IN_PHY.Vdc;
+			Service_Data[1][Service_step] = (float)VDC_ADC_IN_PHY.Idc;
+	  //		Service_Data[1][Service_step] = (float)(PID_Result*100);
+	  //		Service_Data[2][Service_step] = (float)(PID_CONF.Err_pr*100);
+	  //		Service_Data[3][Service_step] = (float)(PID_CONF.Ui_previous*100);
+	  //		Service_Data[4][Service_step] = (float)(PID_CONF.Ud_previous*100);
+
+			if (Service_step==500){
+	  //			HAL_TIM_PWM_Stop_DMA(&BUCK_Tim4, BUCK_Tim4_PWM_CH);
+				Service_step=0;
+				Service_step2--;
+
+			}
+			else {
+					Service_step++;
+		//			HAL_TIMEx_PWMN_Start_DMA(&BUCK_Tim1, BUCK_Tim1_PWM_CH, &BUCK_PWM_SRC.PWM_A, 1);
+					}
+			Calc_Start = RESET;
+	  }
 	  //HAL_ADC_Start_DMA(&BUCK_ADC1, p_ADC1_Data, ADC1_CHs);
 
 
@@ -278,64 +340,7 @@ void SystemClock_Config(void)
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 	if (htim ->Instance == TIM2){
 
-		ADC_MA_VAL_Collection();
-		ADC2Phy_VDC_ProcessData(&ADC_Conf,(RAW_ADC_Struct*)Read_Volt_DC(), &VDC_ADC_IN_PHY);
-		//VDC_ADC_IN_PHY.Vdc=Service_step2;
-		//VDC_ADC_IN_PHY.Vdc = 0;
-		if (((float)VDC_ADC_IN_PHY.Vdc) < BUCK_VDC_REF_LOW_REF - 30){
-			PID_Result = Buck_Control(&PID_CONF_StartUp,BUCK_VDC_REF, VDC_ADC_IN_PHY.Vdc);
-			//PID_Result = PID(BUCK_VDC_REF,  VDC_ADC_IN_PHY.Vdc , &pPI_VDC_CTRL_BURST);
-			PID_CONF.resetPI = SET;
-			pPI_VDC_CTRL.resetPI = SET;
-
-		}
-		else {
-			PID_Result = Buck_Control(&PID_CONF,BUCK_VDC_REF, VDC_ADC_IN_PHY.Vdc);
-			//PID_Result = PID(BUCK_VDC_REF,  VDC_ADC_IN_PHY.Vdc , &pPI_VDC_CTRL);
-			pPI_VDC_CTRL_BURST.resetPI = SET;
-			PID_CONF_Burst.resetPI = SET;
-		}
-
-
-
-		if (VDC_ADC_IN_PHY.Vdc>=BUCK_VDC_OV){
-			HAL_TIMEx_PWMN_Stop_DMA(&BUCK_Tim1, BUCK_Tim1_PWM_CH);
-//			HAL_TIM_PWM_Stop_DMA(&BUCK_Tim4, BUCK_Tim4_PWM_CH);
-		}
-		else if (VDC_ADC_IN_PHY.Vdc <= BUCK_VDC_REF_LOW_REF){
-			HAL_TIMEx_PWMN_Start_DMA(&BUCK_Tim1, BUCK_Tim1_PWM_CH, &BUCK_PWM_SRC.PWM_A, 1);
-//			HAL_TIM_PWM_Start_DMA(&BUCK_Tim4, BUCK_Tim4_PWM_CH, &BUCK_PWM_SRC.PWM_B, 1);
-		}
-
-		//PID_Result = 0.9;
-		BUCK_PWM_Processing(PID_Result, &BUCK_Tim1, &BUCK_PWM_SRC);
-		//HAL_TIM_GenerateEvent(&BUCK_Tim1, TIM_EVENTSOURCE_CC1);
-
-//		BUCK_OC_SRC.OC1 = (uint32_t)((float)BUCK_PWM_SRC.PWM_A);
-//		BUCK_OC_SRC.OC1 = 10000;
-//		ADC_Trigger_Init(BUCK_OC_SRC.OC1);
-//		HAL_ADC_Start_DMA(&BUCK_ADC1, p_ADC1_Data, ADC1_CHs);
-
-
-		Service_Data[0][Service_step] = (float)VDC_ADC_IN_PHY.Vdc;
-		Service_Data[1][Service_step] = (float)VDC_ADC_IN_PHY.Idc;
-//		Service_Data[1][Service_step] = (float)(PID_Result*100);
-//		Service_Data[2][Service_step] = (float)(PID_CONF.Err_pr*100);
-//		Service_Data[3][Service_step] = (float)(PID_CONF.Ui_previous*100);
-//		Service_Data[4][Service_step] = (float)(PID_CONF.Ud_previous*100);
-
-		if (Service_step==500){
-//			HAL_TIM_PWM_Stop_DMA(&BUCK_Tim4, BUCK_Tim4_PWM_CH);
-			Service_step=0;
-			Service_step2--;
-
-		}
-		else {
-			Service_step++;
-//			HAL_TIMEx_PWMN_Start_DMA(&BUCK_Tim1, BUCK_Tim1_PWM_CH, &BUCK_PWM_SRC.PWM_A, 1);
-		}
-
-
+		Calc_Start = SET;
 	}
 	else if (htim ->Instance == TIM5){
 		TimeoutMng();
@@ -392,7 +397,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc){
 	//HAL_ADC_Stop_DMA(&BUCK_ADC1);
 	DATA_Acquisition_from_DMA(p_ADC1_Data);
-	DATA_Processing();
+
 	HAL_GPIO_TogglePin(LED_VD3_PORT, LED_VD3);
 	//HAL_ADC_Start_DMA(&BUCK_ADC1, p_ADC1_Data, ADC1_MA_PERIOD_RAW*ADC1_CHs);
 	//HAL_ADC_Stop_DMA(&BUCK_ADC1);
