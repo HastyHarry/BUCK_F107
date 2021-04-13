@@ -232,7 +232,7 @@ int main(void)
 	  //			HAL_TIM_PWM_Start_DMA(&BUCK_Tim4, BUCK_Tim4_PWM_CH, &BUCK_PWM_SRC.PWM_B, 1);
 			}
 
-			//PID_Result = 0.9;
+			//PID_Result = 0.6;
 			BUCK_PWM_Processing(PID_Result, &BUCK_Tim1, &BUCK_PWM_SRC);
 			//HAL_TIM_GenerateEvent(&BUCK_Tim1, TIM_EVENTSOURCE_CC1);
 
@@ -243,13 +243,13 @@ int main(void)
 
 
 			Service_Data[0][Service_step] = (float)VDC_ADC_IN_PHY.Vdc;
-			Service_Data[1][Service_step] = (float)VDC_ADC_IN_PHY.Idc;
-	  //		Service_Data[1][Service_step] = (float)(PID_Result*100);
-	  //		Service_Data[2][Service_step] = (float)(PID_CONF.Err_pr*100);
-	  //		Service_Data[3][Service_step] = (float)(PID_CONF.Ui_previous*100);
-	  //		Service_Data[4][Service_step] = (float)(PID_CONF.Ud_previous*100);
+			//Service_Data[1][Service_step] = (float)VDC_ADC_IN_PHY.Idc;
+	  		Service_Data[1][Service_step] = (float)(PID_Result*100);
+	  		Service_Data[2][Service_step] = (float)(PID_CONF.Err_pr*100);
+	  		Service_Data[3][Service_step] = (float)(PID_CONF.Ui_previous*100);
+	  		Service_Data[4][Service_step] = (float)(PID_CONF.Ud_previous*100);
 
-			if (Service_step==500){
+			if (Service_step==100){
 	  //			HAL_TIM_PWM_Stop_DMA(&BUCK_Tim4, BUCK_Tim4_PWM_CH);
 				Service_step=0;
 				Service_step2--;

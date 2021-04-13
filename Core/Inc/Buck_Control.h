@@ -30,6 +30,8 @@ float Sat_Up;
 float Sat_Down;
 float Hist;
 float Base_Value;
+float MA_result[BUCK_PID_MA];
+uint16_t MA_Step;
 FlagStatus Init_Complete;
 FlagStatus resetPI;
 FlagStatus resetComplete;

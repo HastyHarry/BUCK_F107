@@ -156,7 +156,8 @@ float PID_Control(float Ref, float Feed, PID_Control_Struct* Conf_struct){
 	float Err;
 //	float SW_Freq;
 	float Result;
-
+	float Result_Calc;
+	uint16_t i;
 	float Up;
 	float Ui;
 	float Ud;
@@ -202,6 +203,15 @@ float PID_Control(float Ref, float Feed, PID_Control_Struct* Conf_struct){
 	Conf_struct->Ud_previous = Ud;
 
 
+//	Conf_struct->MA_result[Conf_struct->MA_Step] = Result;
+//	Conf_struct->MA_Step++;
+//	if (Conf_struct->MA_Step >= BUCK_PID_MA) Conf_struct->MA_Step = 0;
+//
+//	Result_Calc=0;
+//	for (i=0;i<BUCK_PID_MA; i++){
+//		Result_Calc = Result_Calc + Conf_struct->MA_result[i];
+//	}
+//	Result = Result_Calc/BUCK_PID_MA;
 
 	return Result;
 
@@ -217,7 +227,7 @@ float PID_Control(float Ref, float Feed, PID_Control_Struct* Conf_struct){
 void DATA_Acquisition_from_DMA(uint32_t* p_ADC1_Data) {
 
 //	uint16_t MA_Period;
-	uint16_t i;
+	uint32_t i;
 	float Value1 =0;
 	float Value2 =0;
 	float Value3 =0;
@@ -245,8 +255,10 @@ void DATA_Acquisition_from_DMA(uint32_t* p_ADC1_Data) {
 	for (i=0;i<ADC1_MA_PERIOD_RAW;i++){
 		//Value1 = Value1 + p_ADC1_Data[i*ADC1_CHs];
 		Raw_DMA.Vdc[i] = p_ADC1_Data[i*ADC1_CHs+1];
-		Raw_DMA.Idc[i] = p_ADC1_Data[i*ADC1_CHs+2];
+		//Raw_DMA.Idc[i] = p_ADC1_Data[i*ADC1_CHs+2];
 	}
+
+	//Raw_DMA.Vdc[0]= p_ADC1_Data[1];
 	Raw_DMA.Ready = SET;
 	//Raw_ADC.Vac_MA = (float)(Value1/(float)(ADC1_MA_PERIOD));
 	//Raw_ADC.Vdc_MA = (float)(Value2/(float)(ADC1_MA_PERIOD));
@@ -276,10 +288,9 @@ void DATA_Processing(){
 			//Value3 = Value3 + Raw_DMA.Idc[i];
 		}
 
-
 		Raw_ADC.Vdc[Raw_ADC.MA_Counter] = Value2/ADC1_MA_PERIOD_RAW;
 		//Raw_ADC.Idc[Raw_ADC.MA_Counter] = Value3/ADC1_MA_PERIOD_RAW;
-
+		//Raw_ADC.Vdc[Raw_ADC.MA_Counter] = Raw_DMA.Vdc[0];
 		Raw_ADC.MA_Counter++;
 		if (Raw_ADC.MA_Counter>=ADC1_MA_PERIOD){
 			Raw_ADC.MA_Counter=0;

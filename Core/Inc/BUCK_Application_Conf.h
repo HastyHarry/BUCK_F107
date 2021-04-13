@@ -30,22 +30,23 @@
 #define ADC_VAL_CHANGE_SPD_K			0.5
 
 
-#define BUCK_VDC_REF					150
+#define BUCK_VDC_REF					70
 #define BUCK_VDC_OV						200
 #define BUCK_VDC_HIST					10												/*!< value in %*/
 #define BUCK_VDC_REF_LOW_REF			BUCK_VDC_REF-(BUCK_VDC_REF*BUCK_VDC_HIST/100)
 #define BUCK_VDC_REF_HIGH_REF			BUCK_VDC_REF+(BUCK_VDC_REF*BUCK_VDC_HIST/100)
 
 #define BUCK_PID_K_P					0.05//0.05
-#define BUCK_PID_K_I					0.25 //0.7
-#define BUCK_PID_K_D					0.0//0.0001
+#define BUCK_PID_K_I					0.15//0.25 //0.7
+#define BUCK_PID_K_D					0.1//0.0001
 #define BUCK_PID_W_F					2*PI*BUCK_Math_Frequency/10
-#define BUCK_PID_SAT_UP					0.75
-#define BUCK_PID_SAT_DOWN				0.0
+#define BUCK_PID_SAT_UP					0.9
+#define BUCK_PID_SAT_DOWN				0.05
 #define BUCK_PID_HIST					1.0												/*!<Value in %>*/
 #define BUCK_PID_BASE_VAL				0.5
 #define BUCK_PID_SAT_UP_BURST			0.2
 #define BUCK_PID_SAT_DOWN_BURST			0.0
+#define BUCK_PID_MA						1
 
 #define G_VAC                           4.25//4.708                                     /*!< Gain terms of the AC voltage sensing */
 #define B_VAC                           1975                                            /*!< Bias terms of the AC voltage sensing */
