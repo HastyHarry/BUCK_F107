@@ -133,15 +133,40 @@ void Buck_PID_Init(PID_Control_Struct* PID_CONFIG, float Kp, float Ki, float Kd,
   * @param  Feed
   * @retval Res PID Output
   */
-float Buck_Control(PID_Control_Struct* PID_CONFIG, float Ref, float Feed){
-	float Res;
-	if (PID_CONFIG->Init_Complete!=SET){
-		Res = 0;
+float Buck_Control(PID_Control_Struct* Voltage_PID, PID_Control_Struct* Current_PID, float Ref, float VoltageFeed, float CurrentFeed){
+	float ResV;
+	float ResI;
+	float Ref_Curr;
+	if (Voltage_PID->Init_Complete!=SET || Current_PID->Init_Complete!=SET  ){
+		ResV = 0;
+		ResI = 0;
 	}
 	else {
-		Res = PID_Control(Ref, Feed, PID_CONFIG);
+		ResV = PID_Control(Ref, VoltageFeed, Voltage_PID);
+		Ref_Curr = ResV;
+		ResI = PID_Control(Ref_Curr, CurrentFeed, Current_PID);
 	}
-	return Res;
+	return ResI;
+}
+/**
+  * @brief  Buck_Control
+  * @param  Ref
+  * @param  Feed
+  * @retval Res PID Output
+  */
+float Voltage_Control(PID_Control_Struct* Voltage_PID, float Ref, float VoltageFeed){
+	float ResV;
+	float ResI;
+	float Ref_Curr;
+	if (Voltage_PID->Init_Complete!=SET){
+		ResV = 0;
+		ResI = 0;
+	}
+	else {
+		ResV = PID_Control(Ref, VoltageFeed, Voltage_PID);
+
+	}
+	return ResV;
 }
 
 /**
@@ -255,7 +280,7 @@ void DATA_Acquisition_from_DMA(uint32_t* p_ADC1_Data) {
 	for (i=0;i<ADC1_MA_PERIOD_RAW;i++){
 		//Value1 = Value1 + p_ADC1_Data[i*ADC1_CHs];
 		Raw_DMA.Vdc[i] = p_ADC1_Data[i*ADC1_CHs+1];
-		//Raw_DMA.Idc[i] = p_ADC1_Data[i*ADC1_CHs+2];
+		Raw_DMA.Idc[i] = p_ADC1_Data[i*ADC1_CHs];
 	}
 
 	//Raw_DMA.Vdc[0]= p_ADC1_Data[1];
@@ -285,11 +310,11 @@ void DATA_Processing(){
 		for (i=0;i<ADC1_MA_PERIOD_RAW;i++){
 			//Value1 = Value1 + p_ADC1_Data[i*ADC1_CHs];
 			Value2 = Value2 + Raw_DMA.Vdc[i];
-			//Value3 = Value3 + Raw_DMA.Idc[i];
+			Value3 = Value3 + Raw_DMA.Idc[i];
 		}
 
 		Raw_ADC.Vdc[Raw_ADC.MA_Counter] = Value2/ADC1_MA_PERIOD_RAW;
-		//Raw_ADC.Idc[Raw_ADC.MA_Counter] = Value3/ADC1_MA_PERIOD_RAW;
+		Raw_ADC.Idc[Raw_ADC.MA_Counter] = Value3/ADC1_MA_PERIOD_RAW;
 		//Raw_ADC.Vdc[Raw_ADC.MA_Counter] = Raw_DMA.Vdc[0];
 		Raw_ADC.MA_Counter++;
 		if (Raw_ADC.MA_Counter>=ADC1_MA_PERIOD){
@@ -310,11 +335,11 @@ void ADC_MA_VAL_Collection(){
 	for (i=0;i<ADC1_MA_PERIOD;i++){
 		//Value1 = Value1 + Raw_ADC.Vac[i];
 		Value2 = Value2 + Raw_ADC.Vdc[i];
-		//Value3 = Value3 + Raw_ADC.Idc[i];
+		Value3 = Value3 + Raw_ADC.Idc[i];
 	}
 	//Raw_ADC.Vac_MA = (float)(Value1/(float)(ADC1_MA_PERIOD));
 	Raw_ADC.Vdc_MA = (float)(Value2/(float)(ADC1_MA_PERIOD));
-	//Raw_ADC.Idc_MA = (float)(Value3/(float)(ADC1_MA_PERIOD));
+	Raw_ADC.Idc_MA = (float)(Value3/(float)(ADC1_MA_PERIOD));
 }
 
 
@@ -333,6 +358,23 @@ void ADC2Phy_VDC_ProcessData(ADC_Conf_TypeDef *ADC_Conf, RAW_ADC_Struct* p_Data_
 	float invG_Vdc=ADC_Conf->invG_Vdc;
 
 	Cooked_Values->Vdc = ((float)((int16_t)p_Data_Sub->Vdc_MA-B_Vdc)*(float)(G_Vdc));
+
+}
+
+/**
+  * @brief  ADC2Phy_VDC_ProcessData
+  * @param  ADC_Conf
+  * @param  p_Data_Sub
+  * @param  Cooked_Values
+  * @retval Cooked_Values
+  */
+void ADC2Phy_IDC_ProcessData(ADC_Conf_TypeDef *ADC_Conf, RAW_ADC_Struct* p_Data_Sub, Cooked_ADC_Struct* Cooked_Values){
+
+	float B_Idc=ADC_Conf->B_Idc;
+	float G_Idc=ADC_Conf->G_Idc;
+	float invG_Idc=ADC_Conf->invG_Idc;
+
+	Cooked_Values->Idc = ((float)((int16_t)p_Data_Sub->Idc_MA-B_Idc)*(float)(G_Idc));
 
 }
 
