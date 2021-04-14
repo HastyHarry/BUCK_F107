@@ -85,6 +85,7 @@ uint32_t Service_step2;
 
 
 float PID_Result;
+float PWM;
 uint16_t Duty_To_Send;
 uint16_t Tim_Counter;
 
@@ -165,8 +166,8 @@ int main(void)
   DPC_TO_Init();
   Buck_PID_Init(&BUCK_PID_CONF, BUCK_PID_K_P,BUCK_PID_K_I,BUCK_PID_K_D, BUCK_Math_Frequency, BUCK_PID_W_F, BUCK_PID_SAT_UP, BUCK_PID_SAT_DOWN, BUCK_PID_HIST, BUCK_PID_BASE_VAL);
   Buck_PID_Init(&PID_CONF_StartUp, BUCK_PID_K_P,BUCK_PID_K_I,BUCK_PID_K_D, BUCK_Math_Frequency, BUCK_PID_W_F, BUCK_PID_SAT_UP_BURST, BUCK_PID_SAT_DOWN_BURST, BUCK_PID_HIST, BUCK_PID_BASE_VAL);
-  Buck_PID_Init(&Voltage_PID_CONF, V_PID_K_P,V_PID_K_I,V_PID_K_D, BUCK_Math_Frequency, BUCK_PID_W_F, V_PID_SAT_UP_BURST, V_PID_SAT_DOWN_BURST, V_PID_HIST, V_PID_BASE_VAL);
-  Buck_PID_Init(&Current_PID_CONF, I_PID_K_P,I_PID_K_I,I_PID_K_D, BUCK_Math_Frequency, BUCK_PID_W_F, I_PID_SAT_UP_BURST, I_PID_SAT_DOWN_BURST, I_PID_HIST, I_PID_BASE_VAL);
+  Buck_PID_Init(&Voltage_PID_CONF, V_PID_K_P,V_PID_K_I,V_PID_K_D, BUCK_Math_Frequency, BUCK_PID_W_F, V_PID_SAT_UP, V_PID_SAT_DOWN, V_PID_HIST, V_PID_BASE_VAL);
+  Buck_PID_Init(&Current_PID_CONF, I_PID_K_P,I_PID_K_I,I_PID_K_D, BUCK_Math_Frequency, BUCK_PID_W_F, I_PID_SAT_UP, I_PID_SAT_DOWN, I_PID_HIST, I_PID_BASE_VAL);
 
 
   DPC_PID_Init(&pPI_VDC_CTRL,DPC_VCTRL_KP,DPC_VCTRL_KI,DPC_PI_VDC_TS,DPC_VCTRL_PI_sat_up,DPC_VCTRL_PI_sat_down,DPC_VCTRL_PI_SAT_EN,DPC_VCTRL_PI_AW_EN,DPC_VCTRL_PI_AWTG);
@@ -226,8 +227,9 @@ int main(void)
 
 			}
 			else {
-				//PID_Result = Buck_Control(&Voltage_PID_CONF,&Current_PID_CONF,BUCK_VDC_REF, VDC_ADC_IN_PHY.Vdc, VDC_ADC_IN_PHY.Idc);
-				PID_Result = Voltage_Control(&BUCK_PID_CONF, BUCK_VDC_REF, VDC_ADC_IN_PHY.Vdc);
+				VDC_ADC_IN_PHY.Vdc = VDC_ADC_IN_PHY.Vdc - PID_Result;
+				PID_Result = Buck_Control(&Voltage_PID_CONF,&Current_PID_CONF,BUCK_VDC_REF, VDC_ADC_IN_PHY.Vdc, VDC_ADC_IN_PHY.Idc);
+				//PID_Result = Voltage_Control(&BUCK_PID_CONF, BUCK_VDC_REF, VDC_ADC_IN_PHY.Vdc);
 				//PID_Result = PID(BUCK_VDC_REF,  VDC_ADC_IN_PHY.Vdc , &pPI_VDC_CTRL);
 				pPI_VDC_CTRL_BURST.resetPI = SET;
 				PID_CONF_StartUp.resetPI = SET;
@@ -243,9 +245,9 @@ int main(void)
 				HAL_TIMEx_PWMN_Start_DMA(&BUCK_Tim1, BUCK_Tim1_PWM_CH, &BUCK_PWM_SRC.PWM_A, 1);
 	  //			HAL_TIM_PWM_Start_DMA(&BUCK_Tim4, BUCK_Tim4_PWM_CH, &BUCK_PWM_SRC.PWM_B, 1);
 			}
-
-			PID_Result = 0.6;
-			BUCK_PWM_Processing(PID_Result, &BUCK_Tim1, &BUCK_PWM_SRC);
+			PWM = PID_Result/100;
+			//PID_Result = 1.0;
+			BUCK_PWM_Processing(PWM, &BUCK_Tim1, &BUCK_PWM_SRC);
 			//HAL_TIM_GenerateEvent(&BUCK_Tim1, TIM_EVENTSOURCE_CC1);
 
 	  //		BUCK_OC_SRC.OC1 = (uint32_t)((float)BUCK_PWM_SRC.PWM_A);
@@ -262,7 +264,7 @@ int main(void)
 //	  		Service_Data[4][Service_step] = (float)(PID_CONF.Ud_previous*100);
 			Service_Data[1][Service_step] = (float)Raw_ADC.Idc_MA;
 
-			if (Service_step==100){
+			if (Service_step==500){
 	  //			HAL_TIM_PWM_Stop_DMA(&BUCK_Tim4, BUCK_Tim4_PWM_CH);
 				Service_step=0;
 				Service_step2--;
