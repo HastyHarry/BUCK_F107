@@ -190,13 +190,13 @@ int main(void)
 
   //HAL_ADC_Start_IT(&BUCK_ADC1);
 
-  HAL_ADC_Start_DMA(&BUCK_ADC1, p_ADC1_Data, ADC1_MA_PERIOD_RAW*ADC1_CHs);
+
 
   HAL_TIM_Base_Start_IT(&htim1);
 
   HAL_TIM_Base_Start_IT(&htim5);
 
-  HAL_ADC_Start_DMA(&BUCK_ADC1, p_ADC1_Data, ADC1_MA_PERIOD_RAW*ADC1_CHs);
+  //HAL_ADC_Start_DMA(&BUCK_ADC1, p_ADC1_Data, ADC1_MA_PERIOD_RAW*ADC1_CHs);
   HAL_TIM_Base_Start_IT(&htim2);
   HAL_TIM_Base_Start_IT(&htim4);
 
@@ -357,6 +357,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 	if (htim ->Instance == TIM2){
 
 		Calc_Start = SET;
+		HAL_ADC_Start_DMA(&BUCK_ADC1, p_ADC1_Data, ADC1_MA_PERIOD_RAW*ADC1_CHs);
 	}
 	else if (htim ->Instance == TIM5){
 		TimeoutMng();
@@ -411,7 +412,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 //}
 
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc){
-	//HAL_ADC_Stop_DMA(&BUCK_ADC1);
+	HAL_ADC_Stop_DMA(&BUCK_ADC1);
 	DATA_Acquisition_from_DMA(p_ADC1_Data);
 
 	HAL_GPIO_TogglePin(LED_VD3_PORT, LED_VD3);
