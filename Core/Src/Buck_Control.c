@@ -144,7 +144,7 @@ float Buck_Control(PID_Control_Struct* Voltage_PID, PID_Control_Struct* Current_
 	else {
 		ResV = PID_Control(Ref, VoltageFeed, Voltage_PID);
 		Ref_Curr = ResV;
-		//Ref_Curr = 3;
+		Ref_Curr = 3;
 		ResI = PID_Control(Ref_Curr, CurrentFeed, Current_PID);
 	}
 	return ResI;
