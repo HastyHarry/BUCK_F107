@@ -82,6 +82,8 @@ volatile FlagStatus Calc_Start;
 volatile float Service_Data[5][500];
 uint32_t Service_step;
 uint32_t Service_step2;
+uint16_t j;
+FlagStatus DMA_FLAG;
 
 
 float PID_Result;
@@ -189,12 +191,12 @@ int main(void)
 
 
   HAL_TIM_Base_Start_IT(&htim1);
-
   HAL_TIM_Base_Start_IT(&htim5);
-
-  //HAL_ADC_Start_DMA(&BUCK_ADC1, p_ADC1_Data, ADC1_MA_PERIOD_RAW*ADC1_CHs);
   HAL_TIM_Base_Start_IT(&htim2);
   HAL_TIM_Base_Start_IT(&htim4);
+  HAL_TIM_OC_Start_IT(&htim1, TIM_CHANNEL_1);
+
+  //HAL_ADC_Start_DMA(&BUCK_ADC1, p_ADC1_Data, ADC1_MA_PERIOD_RAW*ADC1_CHs);
 
 
   /* USER CODE END 2 */
@@ -244,7 +246,7 @@ int main(void)
 	  //			HAL_TIM_PWM_Start_DMA(&BUCK_Tim4, BUCK_Tim4_PWM_CH, &BUCK_PWM_SRC.PWM_B, 1);
 			}
 			PWM = PID_Result/100;
-			//PWM = 0.8;
+			PWM = 0.8;
 			BUCK_PWM_Processing(PWM, &BUCK_Tim1, &BUCK_PWM_SRC);
 			//PWM = PID_Result;
 			//BUCK_PWM_Processing(PWM, &BUCK_Tim1, &BUCK_PWM_SRC);
@@ -357,7 +359,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 	if (htim ->Instance == TIM2){
 
 		Calc_Start = SET;
-		HAL_ADC_Start_DMA(&BUCK_ADC1, p_ADC1_Data, ADC1_MA_PERIOD_RAW*ADC1_CHs);
+		DMA_FLAG = SET;
+		//HAL_ADC_Start_IT(&BUCK_ADC1);
 	}
 	else if (htim ->Instance == TIM5){
 		TimeoutMng();
@@ -393,6 +396,16 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 //			DPC_TO_Set(1, 100);
 //		}
 	}
+	else if (htim ->Instance == TIM1){
+		if (htim->Channel == HAL_TIM_ACTIVE_CHANNEL_1){
+			//if (DMA_FLAG==SET){
+			//	HAL_ADC_Start_DMA(&BUCK_ADC1, p_ADC1_Data, ADC1_MA_PERIOD_RAW*ADC1_CHs);
+
+			//	DMA_FLAG = RESET;
+			//}
+		}
+	}
+
 }
 
 //void HAL_CAN_TxCpltCallback(CAN_HandleTypeDef* CanHandle){
@@ -413,19 +426,33 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc){
 	HAL_ADC_Stop_DMA(&BUCK_ADC1);
+	HAL_GPIO_TogglePin(LED_VD3_PORT, LED_VD3);
+	//HAL_GPIO_WritePin(LED_VD3_PORT, LED_VD3, 0);
 	DATA_Acquisition_from_DMA(p_ADC1_Data);
 
-	HAL_GPIO_TogglePin(LED_VD3_PORT, LED_VD3);
+//	for (j=0;j<3;j++){
+//		p_ADC1_Data[j] = HAL_ADC_GetValue(&BUCK_ADC1);
+//	}
+
 	//HAL_ADC_Start_DMA(&BUCK_ADC1, p_ADC1_Data, ADC1_MA_PERIOD_RAW*ADC1_CHs);
 	//HAL_ADC_Stop_DMA(&BUCK_ADC1);
 }
 
-//void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef *htim){
+void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef *htim){
+	if (htim->Channel == HAL_TIM_ACTIVE_CHANNEL_1){
+		HAL_GPIO_TogglePin(LED_VD3_PORT, LED_VD3);
+		//HAL_GPIO_WritePin(LED_VD3_PORT, LED_VD3, 1);
+		HAL_ADC_Start_DMA(&BUCK_ADC1, p_ADC1_Data, ADC1_MA_PERIOD_RAW*ADC1_CHs);
+		//HAL_TIM_OC_Start_IT(&BUCK_Tim1, TIM_CHANNEL_1);
+	}
+}
+
+//void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim){
 //	if (htim->Channel == HAL_TIM_ACTIVE_CHANNEL_1){
 //		HAL_GPIO_TogglePin(LED_VD3_PORT, LED_VD3);
-//		HAL_TIM_OC_Start_IT(&BUCK_Tim1, TIM_CHANNEL_1);
 //	}
 //}
+
 /* USER CODE END 4 */
 
 /**

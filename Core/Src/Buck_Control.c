@@ -262,21 +262,6 @@ void DATA_Acquisition_from_DMA(uint32_t* p_ADC1_Data) {
 //
 
 	Value2 = 0;
-//	for (i=0;i<ADC1_MA_PERIOD_RAW;i++){
-//		//Value1 = Value1 + p_ADC1_Data[i*ADC1_CHs];
-//		Value2 = Value2 + p_ADC1_Data[i*ADC1_CHs+1];
-//		Value3 = Value3 + p_ADC1_Data[i*ADC1_CHs+2];
-//	}
-//
-//
-//	Raw_ADC.Vdc[Raw_ADC.MA_Counter] = Value2/ADC1_MA_PERIOD_RAW;
-//	Raw_ADC.Idc[Raw_ADC.MA_Counter] = Value3/ADC1_MA_PERIOD_RAW;
-////	Raw_ADC.Vac[Raw_ADC.MA_Counter] = Value1/ADC1_MA_PERIOD_RAW;
-//
-//	Raw_ADC.MA_Counter++;
-//	if (Raw_ADC.MA_Counter>=ADC1_MA_PERIOD){
-//		Raw_ADC.MA_Counter=0;
-//	}
 
 	for (i=0;i<ADC1_MA_PERIOD_RAW;i++){
 		//Value1 = Value1 + p_ADC1_Data[i*ADC1_CHs];
@@ -325,6 +310,16 @@ void DATA_Processing(){
 		Raw_DMA.Ready = RESET;
 	}
 //	Raw_ADC.Vac[Raw_ADC.MA_Counter] = Value1/ADC1_MA_PERIOD_RAW;
+//	if (Raw_DMA.Ready==SET){
+//		Value2 = 0;
+//		for (i=0;i<ADC1_MA_PERIOD_RAW;i++){
+//			//Value1 = Value1 + p_ADC1_Data[i*ADC1_CHs];
+//			Raw_ADC.Vdc[i] = Value2 + Raw_DMA.Vdc[i];
+//			Raw_ADC.Idc[i] = Value3 + Raw_DMA.Idc[i];
+//		}
+//		Raw_DMA.Ready = RESET;
+//	}
+
 }
 
 void ADC_MA_VAL_Collection(){
@@ -438,6 +433,8 @@ void BUCK_PWM_Processing(float PWM_Value, TIM_HandleTypeDef *PWM_Tim, BUCK_PWM_S
 	Duty=(uint32_t)((float)PWM_Period * PWM_Value);
 	DMA_PWM_SOURCE->PWM_A = Duty;
 	DMA_PWM_SOURCE->PWM_B = Duty;
+
+	ADC_Trigger_Init((uint32_t)(Duty/2));
 }
 
 void ADC_Trigger_Init(uint32_t Pulse_Val){

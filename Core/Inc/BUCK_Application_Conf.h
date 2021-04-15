@@ -24,8 +24,8 @@
 #define BUCK_Tim4_PWM_CH 				TIM_CHANNEL_2
 
 #define ADC1_CHs						3
-#define ADC1_MA_PERIOD					5
-#define ADC1_MA_PERIOD_RAW				5//10
+#define ADC1_MA_PERIOD					20
+#define ADC1_MA_PERIOD_RAW				1//10
 #define BUCK_ADC1 						hadc1
 #define ADC_VAL_CHANGE_SPD_K			0.5
 
