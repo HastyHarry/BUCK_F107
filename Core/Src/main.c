@@ -84,6 +84,7 @@ uint32_t Service_step;
 uint32_t Service_step2;
 uint16_t j;
 FlagStatus DMA_FLAG;
+uint32_t ADC_Ch_Selected;
 
 
 float PID_Result;
@@ -109,7 +110,7 @@ extern RAW_ADC_Struct Raw_DMA;
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
-
+void ADC_Config_Ch( uint32_t Channel);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -195,6 +196,7 @@ int main(void)
   HAL_TIM_Base_Start_IT(&htim2);
   HAL_TIM_Base_Start_IT(&htim4);
   HAL_TIM_OC_Start_IT(&htim1, TIM_CHANNEL_1);
+  ADC_Ch_Selected=1;
 
   //HAL_ADC_Start_DMA(&BUCK_ADC1, p_ADC1_Data, ADC1_MA_PERIOD_RAW*ADC1_CHs);
 
@@ -246,7 +248,7 @@ int main(void)
 	  //			HAL_TIM_PWM_Start_DMA(&BUCK_Tim4, BUCK_Tim4_PWM_CH, &BUCK_PWM_SRC.PWM_B, 1);
 			}
 			PWM = PID_Result/100;
-			PWM = 0.8;
+			//PWM = 0.2;
 			BUCK_PWM_Processing(PWM, &BUCK_Tim1, &BUCK_PWM_SRC);
 			//PWM = PID_Result;
 			//BUCK_PWM_Processing(PWM, &BUCK_Tim1, &BUCK_PWM_SRC);
@@ -360,6 +362,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 
 		Calc_Start = SET;
 		DMA_FLAG = SET;
+//		HAL_TIM_OC_Start_IT(&htim1, TIM_CHANNEL_1);
 		//HAL_ADC_Start_IT(&BUCK_ADC1);
 	}
 	else if (htim ->Instance == TIM5){
@@ -397,13 +400,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 //		}
 	}
 	else if (htim ->Instance == TIM1){
-		if (htim->Channel == HAL_TIM_ACTIVE_CHANNEL_1){
-			//if (DMA_FLAG==SET){
-			//	HAL_ADC_Start_DMA(&BUCK_ADC1, p_ADC1_Data, ADC1_MA_PERIOD_RAW*ADC1_CHs);
-
-			//	DMA_FLAG = RESET;
-			//}
-		}
+		HAL_TIM_OC_Start_IT(&htim1, TIM_CHANNEL_1);
 	}
 
 }
@@ -426,13 +423,30 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc){
 	HAL_ADC_Stop_DMA(&BUCK_ADC1);
-	HAL_GPIO_TogglePin(LED_VD3_PORT, LED_VD3);
-	//HAL_GPIO_WritePin(LED_VD3_PORT, LED_VD3, 0);
+	//HAL_ADC_Stop_IT(&BUCK_ADC1);
+	//HAL_GPIO_TogglePin(LED_VD3_PORT, LED_VD3);
+	HAL_GPIO_WritePin(LED_VD3_PORT, LED_VD3, 0);
 	DATA_Acquisition_from_DMA(p_ADC1_Data);
-
-//	for (j=0;j<3;j++){
-//		p_ADC1_Data[j] = HAL_ADC_GetValue(&BUCK_ADC1);
+//	if (ADC_Ch_Selected==1){
+//		//HAL_GPIO_WritePin(LED_VD3_PORT, LED_VD3, 0);
+//		p_ADC1_Data[ADC_Ch_Selected] = HAL_ADC_GetValue(&BUCK_ADC1);
+//		ADC_Config_Ch(ADC_CHANNEL_2);
+//		ADC_Ch_Selected = 2;
+//		HAL_ADC_Start_IT(&BUCK_ADC1);
 //	}
+//	else if (ADC_Ch_Selected==2) {
+//		//HAL_GPIO_WritePin(LED_VD3_PORT, LED_VD3, 1);
+//		p_ADC1_Data[ADC_Ch_Selected] = HAL_ADC_GetValue(&BUCK_ADC1);
+//		ADC_Config_Ch(ADC_CHANNEL_3);
+//		ADC_Ch_Selected = 3;
+//		HAL_ADC_Start_IT(&BUCK_ADC1);
+//	}
+//	else if (ADC_Ch_Selected==3) {
+//		ADC_Ch_Selected = 1;
+//		HAL_GPIO_WritePin(LED_VD3_PORT, LED_VD3, 0);
+//		p_ADC1_Data[ADC_Ch_Selected] = HAL_ADC_GetValue(&BUCK_ADC1);
+//	}
+
 
 	//HAL_ADC_Start_DMA(&BUCK_ADC1, p_ADC1_Data, ADC1_MA_PERIOD_RAW*ADC1_CHs);
 	//HAL_ADC_Stop_DMA(&BUCK_ADC1);
@@ -440,10 +454,23 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc){
 
 void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef *htim){
 	if (htim->Channel == HAL_TIM_ACTIVE_CHANNEL_1){
-		HAL_GPIO_TogglePin(LED_VD3_PORT, LED_VD3);
-		//HAL_GPIO_WritePin(LED_VD3_PORT, LED_VD3, 1);
+		HAL_TIM_OC_Stop_IT(&htim1, TIM_CHANNEL_1);
+		//HAL_GPIO_TogglePin(LED_VD3_PORT, LED_VD3);
+		HAL_GPIO_WritePin(LED_VD3_PORT, LED_VD3, 1);
 		HAL_ADC_Start_DMA(&BUCK_ADC1, p_ADC1_Data, ADC1_MA_PERIOD_RAW*ADC1_CHs);
-		//HAL_TIM_OC_Start_IT(&BUCK_Tim1, TIM_CHANNEL_1);
+	}
+}
+
+void ADC_Config_Ch( uint32_t Channel){
+
+	ADC_ChannelConfTypeDef sConfig = {0};
+
+	sConfig.Channel = Channel;
+	sConfig.Rank = ADC_REGULAR_RANK_1;
+	sConfig.SamplingTime = ADC_SAMPLETIME_1CYCLE_5;
+	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+	{
+	Error_Handler();
 	}
 }
 

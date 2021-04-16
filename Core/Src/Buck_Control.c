@@ -252,16 +252,7 @@ float PID_Control(float Ref, float Feed, PID_Control_Struct* Conf_struct){
 
 void DATA_Acquisition_from_DMA(uint32_t* p_ADC1_Data) {
 
-//	uint16_t MA_Period;
 	uint32_t i;
-	float Value1 =0;
-	float Value2 =0;
-	float Value3 =0;
-
-//	MA_Period=10;
-//
-
-	Value2 = 0;
 
 	for (i=0;i<ADC1_MA_PERIOD_RAW;i++){
 		//Value1 = Value1 + p_ADC1_Data[i*ADC1_CHs];
@@ -269,18 +260,7 @@ void DATA_Acquisition_from_DMA(uint32_t* p_ADC1_Data) {
 		Raw_DMA.Idc[i] = p_ADC1_Data[i*ADC1_CHs];
 	}
 
-	//Raw_DMA.Vdc[0]= p_ADC1_Data[1];
 	Raw_DMA.Ready = SET;
-	//Raw_ADC.Vac_MA = (float)(Value1/(float)(ADC1_MA_PERIOD));
-	//Raw_ADC.Vdc_MA = (float)(Value2/(float)(ADC1_MA_PERIOD));
-//	if (Raw_ADC.Vdc_MA - Raw_ADC.Vdc_MA_prev > 100 ){
-//		Raw_ADC.Vdc_MA = Raw_ADC.Vdc_MA_prev + ((Raw_ADC.Vdc_MA - Raw_ADC.Vdc_MA_prev)*ADC_VAL_CHANGE_SPD_K);
-//	}
-//	else if ( Raw_ADC.Vdc_MA_prev - Raw_ADC.Vdc_MA > 100){
-//		Raw_ADC.Vdc_MA = Raw_ADC.Vdc_MA + ((Raw_ADC.Vdc_MA_prev - Raw_ADC.Vdc_MA)*ADC_VAL_CHANGE_SPD_K);
-//	}
-	//Raw_ADC.Vdc_MA_prev = Raw_ADC.Vdc_MA;
-	//Raw_ADC.Idc_MA = (float)(Value3/(float)(ADC1_MA_PERIOD));
 }
 
 void DATA_Processing(){
@@ -423,18 +403,27 @@ void BUCK_ADC_Init(ADC_Conf_TypeDef *BUCK_ADC_Conf,float G_Vac,float B_Vac,float
 void BUCK_PWM_Processing(float PWM_Value, TIM_HandleTypeDef *PWM_Tim, BUCK_PWM_Source_Struct* DMA_PWM_SOURCE){
 	uint16_t PWM_Period;
 	uint32_t Duty;
+	float Trig_CCR_Val;
+	uint32_t Trig_CCR;
 	PWM_Period = PWM_Tim->Init.Period;
 
 	if (PWM_Value>1) PWM_Value=1;
 	else if (PWM_Value<0) PWM_Value=0;
 
-	if (PWM_Value<0.05) PWM_Value=0;
+	if (PWM_Value>0.5){
+		Trig_CCR_Val = 0.02;
+	}
+	else {
+		Trig_CCR_Val = 0.5;
+	}
 
 	Duty=(uint32_t)((float)PWM_Period * PWM_Value);
+	Trig_CCR = (uint32_t)((float)PWM_Period * Trig_CCR_Val);
 	DMA_PWM_SOURCE->PWM_A = Duty;
 	DMA_PWM_SOURCE->PWM_B = Duty;
 
-	ADC_Trigger_Init((uint32_t)(Duty/2));
+	ADC_Trigger_Init(Trig_CCR);
+
 }
 
 void ADC_Trigger_Init(uint32_t Pulse_Val){
