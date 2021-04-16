@@ -22,6 +22,7 @@ float Kd;
 float SW_Freq;
 float Omega;
 float Err_pr;
+float Up_pr;
 float Ui_pr;
 float Ud_pr;
 float Ui_previous;
@@ -31,6 +32,7 @@ float Sat_Down;
 float Hist;
 float Base_Value;
 float MA_result[BUCK_PID_MA];
+float Resolution_Factor;
 uint16_t MA_Step;
 FlagStatus Init_Complete;
 FlagStatus resetPI;
@@ -107,7 +109,7 @@ typedef struct {
 }PI_STRUCT_t;
 
 
-void Buck_PID_Init(PID_Control_Struct* PID_CONFIG, float Kp, float Ki, float Kd, float Freq, float Omega, float Sat_Up, float Sat_Down, float Hist ,float Base );
+void Buck_PID_Init(PID_Control_Struct* PID_CONFIG, float Kp, float Ki, float Kd, float Freq, float Omega, float Sat_Up, float Sat_Down, float Hist ,float Resolution_Factor );
 float Voltage_Control(PID_Control_Struct* Voltage_PID, float Ref, float VoltageFeed);
 float Buck_Control(PID_Control_Struct* Voltage_PID, PID_Control_Struct* Current_PID, float Ref, float VoltageFeed, float CurrentFeed);
 float PID_Control(float Ref, float Feed, PID_Control_Struct* Conf_struct);

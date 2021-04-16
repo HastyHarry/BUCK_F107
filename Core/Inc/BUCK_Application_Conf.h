@@ -24,20 +24,20 @@
 #define BUCK_Tim4_PWM_CH 				TIM_CHANNEL_2
 
 #define ADC1_CHs						3
-#define ADC1_MA_PERIOD					20
+#define ADC1_MA_PERIOD					100
 #define ADC1_MA_PERIOD_RAW				1//10
 #define BUCK_ADC1 						hadc1
 #define ADC_VAL_CHANGE_SPD_K			0.5
 
 
-#define BUCK_VDC_REF					70
+#define BUCK_VDC_REF					150
 #define BUCK_VDC_OV						200
 #define BUCK_VDC_HIST					10												/*!< value in %*/
 #define BUCK_VDC_REF_LOW_REF			BUCK_VDC_REF-(BUCK_VDC_REF*BUCK_VDC_HIST/100)
 #define BUCK_VDC_REF_HIGH_REF			BUCK_VDC_REF+(BUCK_VDC_REF*BUCK_VDC_HIST/100)
 
-#define V_PID_K_P						0.05//0.045
-#define V_PID_K_I						0.12//0.05
+#define V_PID_K_P						0.5//0.045
+#define V_PID_K_I						0.01//0.12//0.05
 #define V_PID_K_D						0.0//0.01
 #define V_PID_W_F						2*PI*BUCK_Math_Frequency/10
 #define V_PID_SAT_UP					1000
@@ -47,9 +47,10 @@
 #define V_PID_SAT_UP_BURST				0.2
 #define V_PID_SAT_DOWN_BURST			0.0
 #define V_PID_MA						1
+#define V_PID_RESOLUTION				1
 
-#define I_PID_K_P						6//0.05
-#define I_PID_K_I						0.9
+#define I_PID_K_P						3//0.05
+#define I_PID_K_I						0
 #define I_PID_K_D						0.0
 #define I_PID_W_F						2*PI*BUCK_Math_Frequency/10
 #define I_PID_SAT_UP					100.0
@@ -59,16 +60,17 @@
 #define I_PID_SAT_UP_BURST				0.2
 #define I_PID_SAT_DOWN_BURST			0.0
 #define I_PID_MA						1
+#define I_PID_RESOLUTION				1
 
-#define BUCK_PID_K_P					0.05//0.05
-#define BUCK_PID_K_I					0.15//0.25 //0.7
-#define BUCK_PID_K_D					0.1//0.0001
+#define BUCK_PID_K_P					5//0.05
+#define BUCK_PID_K_I					0.0//0.25 //0.7
+#define BUCK_PID_K_D					0.0//0.0001
 #define BUCK_PID_W_F					2*PI*BUCK_Math_Frequency/10
 #define BUCK_PID_SAT_UP					0.9
 #define BUCK_PID_SAT_DOWN				0.05
 #define BUCK_PID_HIST					1.0												/*!<Value in %>*/
 #define BUCK_PID_BASE_VAL				0.5
-#define BUCK_PID_SAT_UP_BURST			0.2
+#define BUCK_PID_SAT_UP_BURST			0.5
 #define BUCK_PID_SAT_DOWN_BURST			0.0
 #define BUCK_PID_MA						1
 
@@ -78,7 +80,7 @@
 #define G_IAC                           10//42.67                                     /*!< Gain terms of the AC current sensing */
 #define B_IAC                           1290                                            /*!< Bias terms of the AC current sensing */
 #define G_VDC                           0.16//200v devider - .058                      /*!< Gain terms of the DC voltage sensing */
-#define B_VDC                           10                                               /*!< Bias terms of the DC voltage sensing */
+#define B_VDC                           0                                               /*!< Bias terms of the DC voltage sensing */
 #define G_IDC                           0.035                                          /*!< Gain terms of the DC current sensing */
 #define B_IDC                           0                                           /*!< Bias terms of the DC current sensing */
 

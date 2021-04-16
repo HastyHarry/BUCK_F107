@@ -109,7 +109,7 @@ void Buck_Tim_PWM_Init(TIM_HandleTypeDef* BuckTIM, uint32_t  Freq_Desidered){
 
   * @retval Res PID Output
   */
-void Buck_PID_Init(PID_Control_Struct* PID_CONFIG, float Kp, float Ki, float Kd, float Freq, float Omega, float Sat_Up, float Sat_Down, float Hist ,float Base ){
+void Buck_PID_Init(PID_Control_Struct* PID_CONFIG, float Kp, float Ki, float Kd, float Freq, float Omega, float Sat_Up, float Sat_Down, float Hist ,float Resolution_Factor ){
 
 
 	PID_CONFIG->SW_Freq = Freq;
@@ -120,7 +120,7 @@ void Buck_PID_Init(PID_Control_Struct* PID_CONFIG, float Kp, float Ki, float Kd,
 	PID_CONFIG->Sat_Up = Sat_Up;
 	PID_CONFIG->Sat_Down = Sat_Down;
 	PID_CONFIG->Hist = Hist;
-	PID_CONFIG->Base_Value = Base;
+	PID_CONFIG->Resolution_Factor = Resolution_Factor;
 	PID_CONFIG->Init_Complete = SET;
 
 
@@ -144,7 +144,7 @@ float Buck_Control(PID_Control_Struct* Voltage_PID, PID_Control_Struct* Current_
 	else {
 		ResV = PID_Control(Ref, VoltageFeed, Voltage_PID);
 		Ref_Curr = ResV;
-		Ref_Curr = 3;
+		//Ref_Curr = 15;
 		ResI = PID_Control(Ref_Curr, CurrentFeed, Current_PID);
 	}
 	return ResI;
@@ -208,10 +208,12 @@ float PID_Control(float Ref, float Feed, PID_Control_Struct* Conf_struct){
 		Err = 0;
 	}
 
+	Err = Err*Conf_struct->Resolution_Factor;
+
 	Up = Conf_struct->Kp * Err;
 	//Ui = (Conf_struct->Ui_previous * 2 * Conf_struct->SW_Freq + Err*Conf_struct->Ki) /(2 * Conf_struct->SW_Freq);
 	//Ud = ((Err - Conf_struct->Err_pr)*Conf_struct->Kd * 2 * Conf_struct->SW_Freq * Conf_struct->Omega - Conf_struct->Ud_previous *(Conf_struct->Omega-2*Conf_struct->SW_Freq )) / (Conf_struct->Omega+2*Conf_struct->SW_Freq);
-	Ui = (Conf_struct->Ui_previous + Err)*Conf_struct->Ki;
+	Ui = Conf_struct->Ui_previous + Err*Conf_struct->Ki;
 	Ud =(Err - Conf_struct->Err_pr)*Conf_struct->Kd;
 	Result = Up+Ui+Ud;
 
@@ -225,8 +227,9 @@ float PID_Control(float Ref, float Feed, PID_Control_Struct* Conf_struct){
 	}
 
 	Conf_struct->Err_pr = Err;
+	Conf_struct->Up_pr = Up;
 	Conf_struct->Ui_previous = Ui;
-	Conf_struct->Ud_previous = Ud;
+	Conf_struct->Ud_previous = Result;
 
 
 //	Conf_struct->MA_result[Conf_struct->MA_Step] = Result;

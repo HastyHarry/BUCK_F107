@@ -215,12 +215,15 @@ int main(void)
 		  ADC_MA_VAL_Collection();
 		  ADC2Phy_VDC_ProcessData(&ADC_Conf,(RAW_ADC_Struct*)Read_Volt_DC(), &VDC_ADC_IN_PHY);
 		  ADC2Phy_IDC_ProcessData(&ADC_Conf,(RAW_ADC_Struct*)Read_Volt_DC(), &VDC_ADC_IN_PHY);
+		  //VDC_ADC_IN_PHY.Vdc=30;
+		  //VDC_ADC_IN_PHY.Idc=5;
 			//VDC_ADC_IN_PHY.Vdc=Service_step2;
 			//VDC_ADC_IN_PHY.Vdc = 0;
-			if (((float)VDC_ADC_IN_PHY.Vdc) < 0){//BUCK_VDC_REF_LOW_REF - 30){
+			if (((float)VDC_ADC_IN_PHY.Vdc) < BUCK_VDC_REF_LOW_REF - 30){
 
-				PID_Result = Buck_Control(&PID_CONF_StartUp, &Current_PID_CONF ,BUCK_VDC_REF,(float)(VDC_ADC_IN_PHY.Vdc - PID_Result), VDC_ADC_IN_PHY.Idc);
+				PID_Result = Buck_Control(&PID_CONF_StartUp, &Current_PID_CONF ,BUCK_VDC_REF,(float)(VDC_ADC_IN_PHY.Vdc/* - PID_Result*/), VDC_ADC_IN_PHY.Idc);
 				//PID_Result = PID(BUCK_VDC_REF,  VDC_ADC_IN_PHY.Vdc , &pPI_VDC_CTRL_BURST);
+				PID_Result = 10;
 				BUCK_PID_CONF.resetPI = SET;
 				pPI_VDC_CTRL.resetPI = SET;
 				Voltage_PID_CONF.resetPI = SET;
@@ -228,9 +231,9 @@ int main(void)
 
 			}
 			else {
-				VDC_ADC_IN_PHY.Vdc = VDC_ADC_IN_PHY.Vdc - PID_Result;
+				//VDC_ADC_IN_PHY.Vdc = VDC_ADC_IN_PHY.Vdc - PID_Result;
 				//PID_Result = Buck_Control(&Voltage_PID_CONF,&Current_PID_CONF,BUCK_VDC_REF, (float)(VDC_ADC_IN_PHY.Vdc - PID_Result), VDC_ADC_IN_PHY.Idc);
-				PID_Result = Buck_Control(&Voltage_PID_CONF,&Current_PID_CONF,BUCK_VDC_REF, VDC_ADC_IN_PHY.Vdc, VDC_ADC_IN_PHY.Idc);
+				PID_Result = Buck_Control(&Voltage_PID_CONF,&Current_PID_CONF,BUCK_VDC_REF, (float)(VDC_ADC_IN_PHY.Vdc/* - PID_Result*/), VDC_ADC_IN_PHY.Idc);
 				//PID_Result = Voltage_Control(&BUCK_PID_CONF, BUCK_VDC_REF, VDC_ADC_IN_PHY.Vdc);
 				//PID_Result = PID(BUCK_VDC_REF,  VDC_ADC_IN_PHY.Vdc , &pPI_VDC_CTRL);
 				pPI_VDC_CTRL_BURST.resetPI = SET;
@@ -248,7 +251,7 @@ int main(void)
 	  //			HAL_TIM_PWM_Start_DMA(&BUCK_Tim4, BUCK_Tim4_PWM_CH, &BUCK_PWM_SRC.PWM_B, 1);
 			}
 			PWM = PID_Result/100;
-			//PWM = 0.2;
+			//PWM = 0.8;
 			BUCK_PWM_Processing(PWM, &BUCK_Tim1, &BUCK_PWM_SRC);
 			//PWM = PID_Result;
 			//BUCK_PWM_Processing(PWM, &BUCK_Tim1, &BUCK_PWM_SRC);
@@ -262,9 +265,10 @@ int main(void)
 
 			Service_Data[0][Service_step] = (float)VDC_ADC_IN_PHY.Vdc;
 			Service_Data[1][Service_step] = (float)VDC_ADC_IN_PHY.Idc;
-	  		Service_Data[2][Service_step] = (float)(PID_Result*100);
-	  		Service_Data[3][Service_step] = (float)(Raw_ADC.Vdc_MA);
-	  		Service_Data[4][Service_step] = (float)(Raw_ADC.Idc_MA);
+			Service_Data[2][Service_step] = (float)(Voltage_PID_CONF.Ui_previous);
+	  		Service_Data[3][Service_step] = (float)(Voltage_PID_CONF.Ud_previous);
+	  		Service_Data[4][Service_step] = (float)(Current_PID_CONF.Ud_previous);
+
 //	  		Service_Data[4][Service_step] = (float)(PID_CONF.Ud_previous*100);
 			//Service_Data[1][Service_step] = (float)VDC_ADC_IN_PHY.Idc;
 
