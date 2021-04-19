@@ -30,7 +30,7 @@
 #define ADC_VAL_CHANGE_SPD_K			0.5
 
 
-#define BUCK_VDC_REF					150
+#define BUCK_VDC_REF					100
 #define BUCK_VDC_OV						200
 #define BUCK_VDC_HIST					10												/*!< value in %*/
 #define BUCK_VDC_REF_LOW_REF			BUCK_VDC_REF-(BUCK_VDC_REF*BUCK_VDC_HIST/100)

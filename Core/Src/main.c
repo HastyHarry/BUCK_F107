@@ -219,11 +219,11 @@ int main(void)
 		  //VDC_ADC_IN_PHY.Idc=5;
 			//VDC_ADC_IN_PHY.Vdc=Service_step2;
 			//VDC_ADC_IN_PHY.Vdc = 0;
-			if (((float)VDC_ADC_IN_PHY.Vdc) < BUCK_VDC_REF_LOW_REF - 30){
+			if (((float)VDC_ADC_IN_PHY.Vdc) < BUCK_VDC_REF_LOW_REF - 50){
 
 				PID_Result = Buck_Control(&PID_CONF_StartUp, &Current_PID_CONF ,BUCK_VDC_REF,(float)(VDC_ADC_IN_PHY.Vdc/* - PID_Result*/), VDC_ADC_IN_PHY.Idc);
 				//PID_Result = PID(BUCK_VDC_REF,  VDC_ADC_IN_PHY.Vdc , &pPI_VDC_CTRL_BURST);
-				PID_Result = 10;
+				PID_Result = 30;
 				BUCK_PID_CONF.resetPI = SET;
 				pPI_VDC_CTRL.resetPI = SET;
 				Voltage_PID_CONF.resetPI = SET;
