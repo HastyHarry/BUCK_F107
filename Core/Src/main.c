@@ -220,6 +220,7 @@ int main(void)
 				Voltage_PID_CONF.Antiwindup_Switch = SET;
 				Current_PID_CONF.Antiwindup_Switch = RESET;
 				PID_Result = Buck_Control(&Voltage_PID_CONF,&Current_PID_CONF,BUCK_VDC_REF, (float)(VDC_ADC_IN_PHY.Vdc/* - PID_Result*/), VDC_ADC_IN_PHY.Idc);
+
 				pPI_VDC_CTRL_BURST.resetPI = SET;
 				PID_CONF_StartUp.resetPI = SET;
 				PWM = PID_Result/BUCK_VAC_REF;
