@@ -33,17 +33,23 @@ float Hist;
 float Base_Value;
 float MA_result[BUCK_PID_MA];
 float Resolution_Factor;
+float I_Part_Sat_Up;
+float I_Part_Sat_Down;
+float Antiwindup_Val;
+float Antiwindup_Gain;
 uint16_t MA_Step;
 FlagStatus Init_Complete;
+FlagStatus Antiwindup_Switch;
 FlagStatus resetPI;
 FlagStatus resetComplete;
 }PID_Control_Struct;
 
 typedef struct{
-  uint32_t Vdc[ADC1_MA_PERIOD];
-  uint32_t Vac[ADC1_MA_PERIOD];
-  uint32_t Idc[ADC1_MA_PERIOD];
-  uint32_t MA_Counter;
+  uint32_t Vdc[ADC1_MA_PERIOD_VDC];
+  uint32_t Vac[ADC1_MA_PERIOD_VDC];
+  uint32_t Idc[ADC1_MA_PERIOD_IDC];
+  uint32_t VDC_MA_Counter;
+  uint32_t IDC_MA_Counter;
   float Vdc_MA;
   float Vac_MA;
   float Idc_MA;
@@ -109,7 +115,7 @@ typedef struct {
 }PI_STRUCT_t;
 
 
-void Buck_PID_Init(PID_Control_Struct* PID_CONFIG, float Kp, float Ki, float Kd, float Freq, float Omega, float Sat_Up, float Sat_Down, float Hist ,float Resolution_Factor );
+void Buck_PID_Init(PID_Control_Struct* PID_CONFIG, float Kp, float Ki, float Kd, float Freq, float Omega, float Sat_Up, float Sat_Down, float Hist ,float Resolution_Factor, float I_Part_Sat_Up, float I_Part_Sat_Down, float Antiwindup );
 float Voltage_Control(PID_Control_Struct* Voltage_PID, float Ref, float VoltageFeed);
 float Buck_Control(PID_Control_Struct* Voltage_PID, PID_Control_Struct* Current_PID, float Ref, float VoltageFeed, float CurrentFeed);
 float PID_Control(float Ref, float Feed, PID_Control_Struct* Conf_struct);

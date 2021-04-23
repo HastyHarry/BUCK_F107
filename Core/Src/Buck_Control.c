@@ -109,7 +109,7 @@ void Buck_Tim_PWM_Init(TIM_HandleTypeDef* BuckTIM, uint32_t  Freq_Desidered){
 
   * @retval Res PID Output
   */
-void Buck_PID_Init(PID_Control_Struct* PID_CONFIG, float Kp, float Ki, float Kd, float Freq, float Omega, float Sat_Up, float Sat_Down, float Hist ,float Resolution_Factor ){
+void Buck_PID_Init(PID_Control_Struct* PID_CONFIG, float Kp, float Ki, float Kd, float Freq, float Omega, float Sat_Up, float Sat_Down, float Hist ,float Resolution_Factor, float I_Part_Sat_Up, float I_Part_Sat_Down, float Antiwindup ){
 
 
 	PID_CONFIG->SW_Freq = Freq;
@@ -121,8 +121,10 @@ void Buck_PID_Init(PID_Control_Struct* PID_CONFIG, float Kp, float Ki, float Kd,
 	PID_CONFIG->Sat_Down = Sat_Down;
 	PID_CONFIG->Hist = Hist;
 	PID_CONFIG->Resolution_Factor = Resolution_Factor;
+	PID_CONFIG->I_Part_Sat_Up = I_Part_Sat_Up;
+	PID_CONFIG->I_Part_Sat_Down = I_Part_Sat_Down;
+	PID_CONFIG->Antiwindup_Gain = Antiwindup;
 	PID_CONFIG->Init_Complete = SET;
-
 
 }
 
@@ -144,7 +146,7 @@ float Buck_Control(PID_Control_Struct* Voltage_PID, PID_Control_Struct* Current_
 	else {
 		ResV = PID_Control(Ref, VoltageFeed, Voltage_PID);
 		Ref_Curr = ResV;
-		//Ref_Curr = 15;
+		//Ref_Curr = 3;
 		ResI = PID_Control(Ref_Curr, CurrentFeed, Current_PID);
 	}
 	return ResI;
@@ -201,19 +203,28 @@ float PID_Control(float Ref, float Feed, PID_Control_Struct* Conf_struct){
 
 	Err = Ref - Feed;
 
-	if (Err < (Ref*Conf_struct->Hist)/100 && Err>0){
-		Err = 0;
-	}
-	else if (Err > (Ref*Conf_struct->Hist)/100 && Err<0){
-		Err = 0;
-	}
+//	if (Err < (Ref*Conf_struct->Hist)/100 && Err>0){
+//		Err = 0;
+//	}
+//	else if (Err > (Ref*Conf_struct->Hist)/100 && Err<0){
+//		Err = 0;
+//	}
 
 	Err = Err*Conf_struct->Resolution_Factor;
 
 	Up = Conf_struct->Kp * Err;
 	//Ui = (Conf_struct->Ui_previous * 2 * Conf_struct->SW_Freq + Err*Conf_struct->Ki) /(2 * Conf_struct->SW_Freq);
 	//Ud = ((Err - Conf_struct->Err_pr)*Conf_struct->Kd * 2 * Conf_struct->SW_Freq * Conf_struct->Omega - Conf_struct->Ud_previous *(Conf_struct->Omega-2*Conf_struct->SW_Freq )) / (Conf_struct->Omega+2*Conf_struct->SW_Freq);
-	Ui = Conf_struct->Ui_previous + Err*Conf_struct->Ki;
+	if (Err < (Ref*Conf_struct->Hist)/100 && Err>0){
+		Ui = (Conf_struct->Ui_previous + Err*Conf_struct->Ki*Conf_struct->Antiwindup_Gain);
+	}
+	else if (Err > (Ref*Conf_struct->Hist)/100 && Err<0){
+		Ui = (Conf_struct->Ui_previous + Err*Conf_struct->Ki*Conf_struct->Antiwindup_Gain);
+	}
+	else {
+		Ui = Conf_struct->Ui_previous + Err*Conf_struct->Ki;
+	}
+
 	Ud =(Err - Conf_struct->Err_pr)*Conf_struct->Kd;
 	Result = Up+Ui+Ud;
 
@@ -225,6 +236,13 @@ float PID_Control(float Ref, float Feed, PID_Control_Struct* Conf_struct){
 	else if (Result<=Conf_struct->Sat_Down){
 		Result = Conf_struct->Sat_Down;
 	}
+
+//	if (Conf_struct->Antiwindup_Switch==SET){
+//		Conf_struct->Antiwindup_Val = (Conf_struct->Sat_Up - Result)*Conf_struct->Antiwindup_Gain;
+//	}
+//	else{
+//		Conf_struct->Antiwindup_Val=0;
+//	}
 
 	Conf_struct->Err_pr = Err;
 	Conf_struct->Up_pr = Up;
@@ -282,12 +300,16 @@ void DATA_Processing(){
 			Value3 = Value3 + Raw_DMA.Idc[i];
 		}
 
-		Raw_ADC.Vdc[Raw_ADC.MA_Counter] = Value2/ADC1_MA_PERIOD_RAW;
-		Raw_ADC.Idc[Raw_ADC.MA_Counter] = Value3/ADC1_MA_PERIOD_RAW;
+		Raw_ADC.Vdc[Raw_ADC.VDC_MA_Counter] = Value2/ADC1_MA_PERIOD_RAW;
+		Raw_ADC.Idc[Raw_ADC.IDC_MA_Counter] = Value3/ADC1_MA_PERIOD_RAW;
 		//Raw_ADC.Vdc[Raw_ADC.MA_Counter] = Raw_DMA.Vdc[0];
-		Raw_ADC.MA_Counter++;
-		if (Raw_ADC.MA_Counter>=ADC1_MA_PERIOD){
-			Raw_ADC.MA_Counter=0;
+		Raw_ADC.VDC_MA_Counter++;
+		if (Raw_ADC.VDC_MA_Counter>=ADC1_MA_PERIOD_VDC){
+			Raw_ADC.VDC_MA_Counter=0;
+		}
+		Raw_ADC.IDC_MA_Counter++;
+		if (Raw_ADC.IDC_MA_Counter>=ADC1_MA_PERIOD_IDC){
+			Raw_ADC.IDC_MA_Counter=0;
 		}
 
 		Raw_DMA.Ready = RESET;
@@ -311,14 +333,21 @@ void ADC_MA_VAL_Collection(){
 	float Value2 =0;
 	float Value3 =0;
 
-	for (i=0;i<ADC1_MA_PERIOD;i++){
+	for (i=0;i<ADC1_MA_PERIOD_VDC;i++){
 		//Value1 = Value1 + Raw_ADC.Vac[i];
 		Value2 = Value2 + Raw_ADC.Vdc[i];
+		//Value3 = Value3 + Raw_ADC.Idc[i];
+	}
+
+	for (i=0;i<ADC1_MA_PERIOD_IDC;i++){
+		//Value1 = Value1 + Raw_ADC.Vac[i];
+		//Value2 = Value2 + Raw_ADC.Vdc[i];
 		Value3 = Value3 + Raw_ADC.Idc[i];
 	}
+
 	//Raw_ADC.Vac_MA = (float)(Value1/(float)(ADC1_MA_PERIOD));
-	Raw_ADC.Vdc_MA = (float)(Value2/(float)(ADC1_MA_PERIOD));
-	Raw_ADC.Idc_MA = (float)(Value3/(float)(ADC1_MA_PERIOD));
+	Raw_ADC.Vdc_MA = (float)(Value2/(float)(ADC1_MA_PERIOD_VDC));
+	Raw_ADC.Idc_MA = (float)(Value3/(float)(ADC1_MA_PERIOD_IDC));
 }
 
 
@@ -419,6 +448,8 @@ void BUCK_PWM_Processing(float PWM_Value, TIM_HandleTypeDef *PWM_Tim, BUCK_PWM_S
 	else {
 		Trig_CCR_Val = 0.5;
 	}
+
+	//Trig_CCR_Val = 0.02;
 
 	Duty=(uint32_t)((float)PWM_Period * PWM_Value);
 	Trig_CCR = (uint32_t)((float)PWM_Period * Trig_CCR_Val);
