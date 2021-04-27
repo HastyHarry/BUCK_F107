@@ -26,16 +26,22 @@
 #define ADC1_CHs						3
 #define ADC1_MA_PERIOD_VDC				50
 #define ADC1_MA_PERIOD_IDC				1000
-#define ADC1_MA_PERIOD_RAW				1//10
+#define ADC1_MA_PERIOD_RAW				5//10
 #define BUCK_ADC1 						hadc1
 #define ADC_VAL_CHANGE_SPD_K			0.5
 
-#define BUCK_VAC_REF					120
-#define BUCK_VDC_REF					100
-#define BUCK_VDC_OV						250
+#define BUCK_IDC_LIM					10
+#define BUCK_VAC_REF					400
+#define BUCK_VDC_REF					200
+#define BUCK_VDC_OV						400
 #define BUCK_VDC_HIST					10												/*!< value in %*/
 #define BUCK_VDC_REF_LOW_REF			BUCK_VDC_REF-(BUCK_VDC_REF*BUCK_VDC_HIST/100)
 #define BUCK_VDC_REF_HIGH_REF			BUCK_VDC_REF+(BUCK_VDC_REF*BUCK_VDC_HIST/100)
+
+
+//Option 1
+
+#define BUCK_PID_W_F					2*PI*BUCK_Math_Frequency/10
 
 #define V_PID_K_P						0.01//0.2 2304
 #define V_PID_K_I						0.002//0.005 2304
@@ -69,22 +75,42 @@
 #define I_PID_INT_SAT_DOWN				-100
 #define I_PID_ANTIWINDUP				0.0
 
-#define BUCK_PID_K_P					0.005
-#define BUCK_PID_K_I					0.001
-#define BUCK_PID_K_D					0.0
-#define BUCK_PID_W_F					2*PI*BUCK_Math_Frequency/10
-#define BUCK_PID_SAT_UP					0.9
-#define BUCK_PID_SAT_DOWN				0.0
-#define BUCK_PID_HIST					0.0												/*!<Value in %>*/
-#define BUCK_PID_BASE_VAL				0.5
-#define BUCK_PID_SAT_UP_BURST			0.5
-#define BUCK_PID_SAT_DOWN_BURST			0.0
-#define BUCK_PID_MA						1
-#define BUCK_PID_RESOLUTION				1
-#define BUCK_INT_SAT_UP					100
-#define BUCK_INT_SAT_DOWN				-100
-#define BUCK_PID_ANTIWINDUP				0.0
 
+//Option 2
+#define V_LIM_PID_K_P					1.0
+#define V_LIM_PID_K_I					0.02
+#define V_LIM_PID_K_D					0.0
+#define V_LIM_PID_W_F					2*PI*BUCK_Math_Frequency/10
+#define V_LIM_PID_SAT_UP				1000
+#define V_LIM_PID_SAT_DOWN				0.0
+#define V_LIM_PID_HIST					0.0												/*!<Value in %>*/
+#define V_LIM_PID_BASE_VAL				0.5
+#define V_LIM_PID_SAT_UP_BURST			1000
+#define V_LIM_PID_SAT_DOWN_BURST		0.0
+#define V_LIM_PID_MA					1
+#define V_LIM_PID_RESOLUTION			1
+#define V_LIM_INT_SAT_UP				100
+#define V_LIM_INT_SAT_DOWN				-100
+#define V_LIM_PID_ANTIWINDUP			0.0
+
+#define I_LIM_PID_K_P					1.0
+#define I_LIM_PID_K_I					0.02
+#define I_LIM_PID_K_D					0.0
+#define I_LIM_PID_W_F					2*PI*BUCK_Math_Frequency/10
+#define I_LIM_PID_SAT_UP				1000
+#define I_LIM_PID_SAT_DOWN				0.0
+#define I_LIM_PID_HIST					0.0												/*!<Value in %>*/
+#define I_LIM_PID_BASE_VAL				0.5
+#define I_LIM_PID_SAT_UP_BURST			1000
+#define I_LIM_PID_SAT_DOWN_BURST		0.0
+#define I_LIM_PID_MA					1
+#define I_LIM_PID_RESOLUTION			1
+#define I_LIM_INT_SAT_UP				100
+#define I_LIM_INT_SAT_DOWN				-100
+#define I_LIM_PID_ANTIWINDUP			0.0
+
+
+//ADC Settings
 #define G_VAC                           4.25//4.708                                     /*!< Gain terms of the AC voltage sensing */
 #define B_VAC                           1975                                            /*!< Bias terms of the AC voltage sensing */
 #define G_IAC                           10//42.67                                     /*!< Gain terms of the AC current sensing */
