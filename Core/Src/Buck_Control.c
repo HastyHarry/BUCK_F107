@@ -243,6 +243,8 @@ float PID_Control(float Ref, float Feed, PID_Control_Struct* Conf_struct){
 //	else{
 //		Conf_struct->Antiwindup_Val=0;
 //	}
+	if (Ui>Conf_struct->I_Part_Sat_Up) Ui = Conf_struct->I_Part_Sat_Up;
+	else if (Ui<Conf_struct->I_Part_Sat_Down) Ui = Conf_struct->I_Part_Sat_Down;
 
 	Conf_struct->Err_pr = Err;
 	Conf_struct->Up_pr = Up;
@@ -259,6 +261,62 @@ float PID_Control(float Ref, float Feed, PID_Control_Struct* Conf_struct){
 //		Result_Calc = Result_Calc + Conf_struct->MA_result[i];
 //	}
 //	Result = Result_Calc/BUCK_PID_MA;
+
+	return Result;
+
+}
+
+float Current_Control(float Ref, float Feed, PID_Control_Struct* Conf_struct){
+
+	float Err;
+//	float SW_Freq;
+	float Result;
+	float Result_Calc;
+	uint16_t i;
+	float Up;
+	float Ui;
+	float Ud;
+
+	if (Conf_struct->resetPI == SET){
+		Conf_struct->Ui_previous = 0;
+		Conf_struct->Ud_previous = 0;
+		Conf_struct->Err_pr = 0;
+		Conf_struct->resetPI = RESET;
+	}
+
+	Err = Ref - Feed;
+
+	Err = Err*Conf_struct->Resolution_Factor;
+
+	Up = Conf_struct->Kp * Err;
+
+	Ui = Conf_struct->Ui_previous + Err*Conf_struct->Ki;
+
+	Ud =(Err - Conf_struct->Err_pr)*Conf_struct->Kd;
+	Result = Up+Ui+Ud;
+
+	Result = I_LIM_PID_BASE_VAL*BUCK_VAC_REF + Result;
+
+	if (Result>=Conf_struct->Sat_Up){
+		Result = Conf_struct->Sat_Up;
+	}
+	else if (Result<=Conf_struct->Sat_Down){
+		Result = Conf_struct->Sat_Down;
+	}
+
+//	if (Conf_struct->Antiwindup_Switch==SET){
+//		Conf_struct->Antiwindup_Val = (Conf_struct->Sat_Up - Result)*Conf_struct->Antiwindup_Gain;
+//	}
+//	else{
+//		Conf_struct->Antiwindup_Val=0;
+//	}
+
+	if (Ui>Conf_struct->I_Part_Sat_Up) Ui = Conf_struct->I_Part_Sat_Up;
+	else if (Ui<Conf_struct->I_Part_Sat_Down) Ui = Conf_struct->I_Part_Sat_Down;
+	Conf_struct->Err_pr = Err;
+	Conf_struct->Up_pr = Up;
+	Conf_struct->Ui_previous = Ui;
+	Conf_struct->Ud_previous = Result;
 
 	return Result;
 

@@ -118,6 +118,7 @@ void Buck_PID_Init(PID_Control_Struct* PID_CONFIG, float Kp, float Ki, float Kd,
 float Voltage_Control(PID_Control_Struct* Voltage_PID, float Ref, float VoltageFeed);
 float Buck_Control(PID_Control_Struct* Voltage_PID, PID_Control_Struct* Current_PID, float Ref, float VoltageFeed, float CurrentFeed);
 float PID_Control(float Ref, float Feed, PID_Control_Struct* Conf_struct);
+float Current_Control(float Ref, float Feed, PID_Control_Struct* Conf_struct);
 void Buck_Tim_Init(TIM_HandleTypeDef* BuckTIM, uint32_t  Freq_Desidered);
 void Buck_Tim_PWM_Init(TIM_HandleTypeDef* BuckTIM, uint32_t  Freq_Desidered);
 void DATA_Acquisition_from_DMA(uint32_t* p_ADC1_Data);

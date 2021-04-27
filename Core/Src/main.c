@@ -182,6 +182,8 @@ int main(void)
   Buck_PID_Init(&UDC_LIMIT_PID, V_LIM_PID_K_P,V_LIM_PID_K_I,V_LIM_PID_K_D, BUCK_Math_Frequency, V_LIM_PID_W_F, V_LIM_PID_SAT_UP, V_LIM_PID_SAT_DOWN, V_LIM_PID_HIST, V_LIM_PID_RESOLUTION, V_LIM_INT_SAT_UP, V_LIM_INT_SAT_DOWN, V_LIM_PID_ANTIWINDUP);
   Buck_PID_Init(&IDC_LIMIT_PID, I_LIM_PID_K_P,I_LIM_PID_K_I,I_LIM_PID_K_D, BUCK_Math_Frequency, I_LIM_PID_W_F, I_LIM_PID_SAT_UP, I_LIM_PID_SAT_DOWN, I_LIM_PID_HIST, I_LIM_PID_RESOLUTION, I_LIM_INT_SAT_UP, I_LIM_INT_SAT_DOWN, I_LIM_PID_ANTIWINDUP);
 
+  Buck_PID_Init(&PID_CONF_StartUp, STUP_PID_K_P,STUP_PID_K_I,STUP_PID_K_D, BUCK_Math_Frequency, STUP_PID_W_F, STUP_PID_SAT_UP, STUP_PID_SAT_DOWN, STUP_PID_HIST, STUP_PID_RESOLUTION, STUP_INT_SAT_UP, STUP_INT_SAT_DOWN, STUP_PID_ANTIWINDUP);
+
   DPC_PID_Init(&pPI_VDC_CTRL,DPC_VCTRL_KP,DPC_VCTRL_KI,DPC_PI_VDC_TS,DPC_VCTRL_PI_sat_up,DPC_VCTRL_PI_sat_down,DPC_VCTRL_PI_SAT_EN,DPC_VCTRL_PI_AW_EN,DPC_VCTRL_PI_AWTG);
   DPC_PID_Init(&pPI_VDC_CTRL_BURST,DPC_VCTRL_KP,DPC_VCTRL_KI,DPC_PI_VDC_TS,DPC_VCTRL_BURST_PI_sat_up,DPC_VCTRL_PI_sat_down,DPC_VCTRL_PI_SAT_EN,DPC_VCTRL_PI_AW_EN,DPC_VCTRL_PI_AWTG);
 
@@ -217,37 +219,44 @@ int main(void)
 		  ADC2Phy_IDC_ProcessData(&ADC_Conf,(RAW_ADC_Struct*)Read_Volt_DC(), &VDC_ADC_IN_PHY);
 
 		  	if (((float)VDC_ADC_IN_PHY.Vdc) > BUCK_VDC_REF_LOW_REF){
-		  		StartUp=1;
+		  		StartUp=2;
 		  	}
 		  	else if (((float)VDC_ADC_IN_PHY.Vdc) < 20){
 		  		StartUp=0;
+		  		PID_CONF_StartUp.resetPI=SET;
 		  	}
-		  	StartUp =1;
+
 			if (StartUp==0){
 				Voltage_PID_CONF.resetPI = SET;
 				Current_PID_CONF.resetPI = SET;
-				PWM=1;
+				UDC_LIMIT_PID.resetPI = SET;
+				IDC_LIMIT_PID.resetPI = SET;
+				PID_Result_V = PID_Control(BUCK_VDC_REF, VDC_ADC_IN_PHY.Vdc, &PID_CONF_StartUp);
+				PWM = PID_Result_V/BUCK_VAC_REF;
+				IDC_LIMIT_PID.resetPI = SET;
+				UDC_LIMIT_PID.resetPI = SET;
 			}
-			else {
+			else if (StartUp==2){
 				Voltage_PID_CONF.Antiwindup_Switch = SET;
 				Current_PID_CONF.Antiwindup_Switch = RESET;
 				//PID_Result = Buck_Control(&Voltage_PID_CONF,&Current_PID_CONF,BUCK_VDC_REF, (float)(VDC_ADC_IN_PHY.Vdc/* - PID_Result*/), VDC_ADC_IN_PHY.Idc);
 				PID_Result_V = PID_Control(BUCK_VDC_REF, VDC_ADC_IN_PHY.Vdc, &UDC_LIMIT_PID);
-				PID_Result_I = PID_Control(BUCK_IDC_LIM, VDC_ADC_IN_PHY.Idc, &IDC_LIMIT_PID);
+				PID_Result_I = Current_Control(BUCK_IDC_LIM, VDC_ADC_IN_PHY.Idc, &IDC_LIMIT_PID);
+				//PID_Result_I = BUCK_VAC_REF;
 
-				if (PID_Result_V<PID_Result_I){
+				if (PID_Result_V<=PID_Result_I){
 					PWM = PID_Result_V/BUCK_VAC_REF;
-					IDC_LIMIT_PID.resetPI = SET;
+
 				}
-				else if (PID_Result_V>=PID_Result_I){
+				else if (PID_Result_V>PID_Result_I){
 					PWM = PID_Result_I/BUCK_VAC_REF;
-					UDC_LIMIT_PID.resetPI = SET;
+					//UDC_LIMIT_PID.resetPI = SET;
 				}
 
-				pPI_VDC_CTRL_BURST.resetPI = SET;
+				//PWM = PID_Result_I/BUCK_VAC_REF;
 				PID_CONF_StartUp.resetPI = SET;
 
-				PWM=0.7;
+				//PWM=0.7;
 			}
 
 			BUCK_PWM_Processing(PWM, &BUCK_Tim1, &BUCK_PWM_SRC);
@@ -262,14 +271,14 @@ int main(void)
 
 			Service_Data[0][Service_step] = (float)VDC_ADC_IN_PHY.Vdc;
 			Service_Data[1][Service_step] = (float)VDC_ADC_IN_PHY.Idc;
-			Service_Data[2][Service_step] = (float)(Voltage_PID_CONF.Ui_previous);
-	  		Service_Data[3][Service_step] = (float)(Voltage_PID_CONF.Ud_previous);
-	  		Service_Data[4][Service_step] = (float)(PID_Result);
+			Service_Data[2][Service_step] = (float)(PID_Result_V);
+			Service_Data[3][Service_step] = (float)(PID_Result_I);
+	  		Service_Data[4][Service_step] = (float)(PID_Result_V);
 
 //	  		Service_Data[4][Service_step] = (float)(PID_CONF.Ud_previous*100);
 			//Service_Data[1][Service_step] = (float)VDC_ADC_IN_PHY.Idc;
 
-			if (Service_step==99){
+			if (Service_step==499){
 	  //			HAL_TIM_PWM_Stop_DMA(&BUCK_Tim4, BUCK_Tim4_PWM_CH);
 				Service_step=0;
 				Service_step2--;
