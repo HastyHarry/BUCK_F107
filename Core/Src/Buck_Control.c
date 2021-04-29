@@ -109,7 +109,7 @@ void Buck_Tim_PWM_Init(TIM_HandleTypeDef* BuckTIM, uint32_t  Freq_Desidered){
 
   * @retval Res PID Output
   */
-void Buck_PID_Init(PID_Control_Struct* PID_CONFIG, float Kp, float Ki, float Kd, float Freq, float Omega, float Sat_Up, float Sat_Down, float Hist ,float Resolution_Factor, float I_Part_Sat_Up, float I_Part_Sat_Down, float Antiwindup ){
+void Buck_PID_Init(PID_Control_Struct* PID_CONFIG, float Kp, float Ki, float Kd, float Freq, float Omega, float Sat_Up, float Sat_Down, float Hist ,float Resolution_Factor, float I_Part_Sat_Up, float I_Part_Sat_Down, float Antiwindup, float Base_Value ){
 
 
 	PID_CONFIG->SW_Freq = Freq;
@@ -124,6 +124,7 @@ void Buck_PID_Init(PID_Control_Struct* PID_CONFIG, float Kp, float Ki, float Kd,
 	PID_CONFIG->I_Part_Sat_Up = I_Part_Sat_Up;
 	PID_CONFIG->I_Part_Sat_Down = I_Part_Sat_Down;
 	PID_CONFIG->Antiwindup_Gain = Antiwindup;
+	PID_CONFIG->Base_Value = Base_Value;
 	PID_CONFIG->Init_Complete = SET;
 
 }
@@ -146,8 +147,8 @@ float Buck_Control(PID_Control_Struct* Voltage_PID, PID_Control_Struct* Current_
 	else {
 		ResV = PID_Control(Ref, VoltageFeed, Voltage_PID);
 		Ref_Curr = ResV;
-		//Ref_Curr = 3;
-		ResI = PID_Control(Ref_Curr, CurrentFeed, Current_PID);
+		//Ref_Curr = 6;
+		ResI = Current_Control(Ref_Curr, CurrentFeed, Current_PID);
 	}
 	return ResI;
 }
@@ -295,7 +296,7 @@ float Current_Control(float Ref, float Feed, PID_Control_Struct* Conf_struct){
 	Ud =(Err - Conf_struct->Err_pr)*Conf_struct->Kd;
 	Result = Up+Ui+Ud;
 
-	Result = I_LIM_PID_BASE_VAL*BUCK_VAC_REF + Result;
+	Result = Conf_struct->Base_Value + Result;
 
 	if (Result>=Conf_struct->Sat_Up){
 		Result = Conf_struct->Sat_Up;

@@ -30,10 +30,10 @@
 #define BUCK_ADC1 						hadc1
 #define ADC_VAL_CHANGE_SPD_K			0.5
 
-#define BUCK_IDC_LIM					5
+#define BUCK_IDC_LIM					25
 #define BUCK_VAC_REF					400
-#define BUCK_VDC_REF					250
-#define BUCK_VDC_OV						400
+#define BUCK_VDC_REF					400
+#define BUCK_VDC_OV						430
 #define BUCK_VDC_HIST					10												/*!< value in %*/
 #define BUCK_VDC_REF_LOW_REF			BUCK_VDC_REF-(BUCK_VDC_REF*BUCK_VDC_HIST/100)
 #define BUCK_VDC_REF_HIGH_REF			BUCK_VDC_REF+(BUCK_VDC_REF*BUCK_VDC_HIST/100)
@@ -43,48 +43,48 @@
 
 #define BUCK_PID_W_F					2*PI*BUCK_Math_Frequency/10
 
-#define V_PID_K_P						0.01//0.2 2304
-#define V_PID_K_I						0.002//0.005 2304
+#define V_PID_K_P						0.05//0.2 2304
+#define V_PID_K_I						0.005//0.002//0.005 2304
 #define V_PID_K_D						0.0//0.01
 #define V_PID_W_F						2*PI*BUCK_Math_Frequency/10
 #define V_PID_SAT_UP					1000
 #define V_PID_SAT_DOWN					-1000.0
 #define V_PID_HIST						1.0												/*!<Value in %>*/
-#define V_PID_BASE_VAL					0.5
+#define V_PID_BASE_VAL					0.0*BUCK_VAC_REF
 #define V_PID_SAT_UP_BURST				0.2
 #define V_PID_SAT_DOWN_BURST			0.0
 #define V_PID_MA						1
 #define V_PID_RESOLUTION				1
-#define V_PID_INT_SAT_UP				100
-#define V_PID_INT_SAT_DOWN				-100
+#define V_PID_INT_SAT_UP				50
+#define V_PID_INT_SAT_DOWN				-50
 #define V_PID_ANTIWINDUP				0.01
 
-#define I_PID_K_P						20//2 2304
+#define I_PID_K_P						10//20//2 2304
 #define I_PID_K_I						0
 #define I_PID_K_D						0.0
 #define I_PID_W_F						2*PI*BUCK_Math_Frequency/10
 #define I_PID_SAT_UP					1000.0
 #define I_PID_SAT_DOWN					0.0
 #define I_PID_HIST						0.0												/*!<Value in %>*/
-#define I_PID_BASE_VAL					1.0
+#define I_PID_BASE_VAL					0.5*BUCK_VAC_REF
 #define I_PID_SAT_UP_BURST				0.2
 #define I_PID_SAT_DOWN_BURST			0.0
 #define I_PID_MA						1
 #define I_PID_RESOLUTION				1
-#define I_PID_INT_SAT_UP				100
-#define I_PID_INT_SAT_DOWN				-100
+#define I_PID_INT_SAT_UP				10
+#define I_PID_INT_SAT_DOWN				-400
 #define I_PID_ANTIWINDUP				0.0
 
 
 //Option 2
 #define V_LIM_PID_K_P					1.0
 #define V_LIM_PID_K_I					0.05
-#define V_LIM_PID_K_D					0.0
+#define V_LIM_PID_K_D					0.5
 #define V_LIM_PID_W_F					2*PI*BUCK_Math_Frequency/10
 #define V_LIM_PID_SAT_UP				BUCK_VAC_REF
 #define V_LIM_PID_SAT_DOWN				0.0
 #define V_LIM_PID_HIST					0.0												/*!<Value in %>*/
-#define V_LIM_PID_BASE_VAL				0.5
+#define V_LIM_PID_BASE_VAL				0.0*BUCK_VAC_REF
 #define V_LIM_PID_SAT_UP_BURST			1000
 #define V_LIM_PID_SAT_DOWN_BURST		0.0
 #define V_LIM_PID_MA					1
@@ -100,7 +100,7 @@
 #define I_LIM_PID_SAT_UP				BUCK_VAC_REF
 #define I_LIM_PID_SAT_DOWN				0.0
 #define I_LIM_PID_HIST					0.0												/*!<Value in %>*/
-#define I_LIM_PID_BASE_VAL				1.0
+#define I_LIM_PID_BASE_VAL				1.0*BUCK_VAC_REF
 #define I_LIM_PID_SAT_UP_BURST			1000
 #define I_LIM_PID_SAT_DOWN_BURST		0.0
 #define I_LIM_PID_MA					1
@@ -114,7 +114,7 @@
 #define STUP_PID_K_D					0.0
 #define STUP_PID_W_F					2*PI*BUCK_Math_Frequency/10
 #define STUP_PID_SAT_UP					BUCK_VAC_REF
-#define STUP_PID_SAT_DOWN				0.2*BUCK_VAC_REF
+#define STUP_PID_SAT_DOWN				0.1*BUCK_VAC_REF
 #define STUP_PID_HIST					0.0												/*!<Value in %>*/
 #define STUP_PID_BASE_VAL				0.5
 #define STUP_PID_SAT_UP_BURST			1000

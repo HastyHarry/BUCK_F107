@@ -114,7 +114,7 @@ typedef struct {
 }PI_STRUCT_t;
 
 
-void Buck_PID_Init(PID_Control_Struct* PID_CONFIG, float Kp, float Ki, float Kd, float Freq, float Omega, float Sat_Up, float Sat_Down, float Hist ,float Resolution_Factor, float I_Part_Sat_Up, float I_Part_Sat_Down, float Antiwindup );
+void Buck_PID_Init(PID_Control_Struct* PID_CONFIG, float Kp, float Ki, float Kd, float Freq, float Omega, float Sat_Up, float Sat_Down, float Hist ,float Resolution_Factor, float I_Part_Sat_Up, float I_Part_Sat_Down, float Antiwindup, float Base_Value );
 float Voltage_Control(PID_Control_Struct* Voltage_PID, float Ref, float VoltageFeed);
 float Buck_Control(PID_Control_Struct* Voltage_PID, PID_Control_Struct* Current_PID, float Ref, float VoltageFeed, float CurrentFeed);
 float PID_Control(float Ref, float Feed, PID_Control_Struct* Conf_struct);
