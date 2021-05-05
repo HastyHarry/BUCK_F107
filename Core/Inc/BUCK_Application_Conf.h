@@ -16,23 +16,23 @@
 #define BUCK_Tim4_OC_CH					TIM_CHANNEL_4
 #define BUCK_Tim5_OC_CH					TIM_CHANNEL_1									/*!<Not in USE>*/
 
-#define BUCK_SW_Frequency				10000											/*!<Switching Freq*/
-#define BUCK_Math_Frequency				10000											/*!<Calculations Freq*/
+#define BUCK_SW_Frequency				12000											/*!<Switching Freq*/
+#define BUCK_Math_Frequency				12000											/*!<Calculations Freq*/
 #define BUCK_TO_Timer_Frequency			1000											/*!<TO Freq*/
 
 #define BUCK_Tim1_PWM_CH 				TIM_CHANNEL_3
 #define BUCK_Tim4_PWM_CH 				TIM_CHANNEL_2
 
 #define ADC1_CHs						3
-#define ADC1_MA_PERIOD_VDC				50
-#define ADC1_MA_PERIOD_IDC				100
+#define ADC1_MA_PERIOD_VDC				5
+#define ADC1_MA_PERIOD_IDC				50
 #define ADC1_MA_PERIOD_RAW				5//10
 #define BUCK_ADC1 						hadc1
 #define ADC_VAL_CHANGE_SPD_K			0.5
 
 #define BUCK_IDC_LIM					25
 #define BUCK_VAC_REF					400
-#define BUCK_VDC_REF					400
+#define BUCK_VDC_REF					275
 #define BUCK_VDC_OV						430
 #define BUCK_VDC_HIST					10												/*!< value in %*/
 #define BUCK_VDC_REF_LOW_REF			BUCK_VDC_REF-(BUCK_VDC_REF*BUCK_VDC_HIST/100)
@@ -77,9 +77,9 @@
 
 
 //Option 2
-#define V_LIM_PID_K_P					1.0
-#define V_LIM_PID_K_I					0.05
-#define V_LIM_PID_K_D					0.5
+#define V_LIM_PID_K_P					0.5//1
+#define V_LIM_PID_K_I					0.02//0.05
+#define V_LIM_PID_K_D					0.5//0.5
 #define V_LIM_PID_W_F					2*PI*BUCK_Math_Frequency/10
 #define V_LIM_PID_SAT_UP				BUCK_VAC_REF
 #define V_LIM_PID_SAT_DOWN				0.0

@@ -248,6 +248,7 @@ int main(void)
 				if (PID_Result_V<=PID_Result_I){
 					PWM = PID_Result_V/BUCK_VAC_REF;
 
+
 				}
 				else if (PID_Result_V>PID_Result_I){
 					PWM = PID_Result_I/BUCK_VAC_REF;
@@ -259,7 +260,7 @@ int main(void)
 
 				//PWM=0.7;
 			}
-
+			//PWM=0.8;
 			BUCK_PWM_Processing(PWM, &BUCK_Tim1, &BUCK_PWM_SRC);
 
 			if (VDC_ADC_IN_PHY.Vdc>=BUCK_VDC_OV){
